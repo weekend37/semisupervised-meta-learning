@@ -100,7 +100,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1000, checkpoint_freq=5)
+    gan.perform_training(epochs=100, checkpoint_freq=5)
     gan.load_latest_checkpoint()
 
     maml_gan = MAMLGAN(
@@ -110,7 +110,8 @@ if __name__ == '__main__':
         database=mini_imagenet_database,
         network_cls=MiniImagenetModel,
         n=5,
-        k=1,
+        k_ml=1,
+        k_val=1,
         k_val_ml=5,
         k_val_val=15,
         k_val_test=15,
@@ -123,8 +124,7 @@ if __name__ == '__main__':
         meta_learning_rate=0.001,
         report_validation_frequency=200,
         log_train_images_after_iteration=200,
-        number_of_tasks_val=100,
-        number_of_tasks_test=1000,
+        num_tasks_val=100,
         clip_gradients=False,
         experiment_name='mini_imagenet_p3',
         val_seed=42,
@@ -133,5 +133,5 @@ if __name__ == '__main__':
 
     maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2)
 
-    maml_gan.train(iterations=15000)
-    maml_gan.evaluate(50, seed=42)
+    maml_gan.train(iterations=10)
+    maml_gan.evaluate(10,100, seed=42)

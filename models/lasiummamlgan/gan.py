@@ -34,9 +34,9 @@ class VisualizationCallback(tf.keras.callbacks.TensorBoard):
             gan = self.model
             image = gan.generator(tf.random.normal(shape=(5, self.model.latent_dim)))
 
-            writer = self._get_writer(self._train_run_name)
-            with writer.as_default():
-                tf.summary.image(name='x', data=image, step=epoch, max_outputs=5)
+            # writer = self._get_writer(self._train_run_name)
+            # with writer.as_default():
+                # tf.summary.image(name='x', data=image, step=epoch, max_outputs=5)
 
 
 class GAN(tf.keras.models.Model):
