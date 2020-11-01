@@ -100,7 +100,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=100, checkpoint_freq=5)
+    gan.perform_training(epochs=20, checkpoint_freq=1)
     gan.load_latest_checkpoint()
 
     maml_gan = MAMLGAN(
@@ -133,5 +133,5 @@ if __name__ == '__main__':
 
     maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2)
 
-    maml_gan.train(iterations=10)
+    maml_gan.train(iterations=30)
     maml_gan.evaluate(10,100, seed=42)
