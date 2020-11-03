@@ -165,5 +165,7 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
             get_task,
             output_types=((tf.float32, tf.float32), (tf.float32, tf.float32))
         )
+        print(dataset.shape)
+        tf.print(dataset[0][0:10,0:10], dataset[1][0:10][0:10])
         setattr(dataset, 'steps_per_epoch', tf.data.experimental.cardinality(dataset))
         return dataset

@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/williamsteenbergen/MetaLearning-TF2.0")
+
 from models.maml.maml import ModelAgnosticMetaLearningModel
 from networks.maml_umtra_networks import MiniImagenetModel
 from databases import MiniImagenetDatabase, ISICDatabase, EuroSatDatabase, PlantDiseaseDatabase, ChestXRay8Database
@@ -8,7 +11,6 @@ def run_mini_imagenet():
 
     maml = ModelAgnosticMetaLearningModel(
         database=mini_imagenet_database,
-        target_database=ChestXRay8Database(),
         network_cls=MiniImagenetModel,
         n=5,
         k_ml=1,
