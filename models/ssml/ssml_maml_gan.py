@@ -12,7 +12,6 @@ sys.path.append(mypath)
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
 
-
 class SSMLMAML(ModelAgnosticMetaLearningModel):
     def __init__(self, perc, *args, **kwargs):
         super(SSMLMAML, self).__init__(*args, **kwargs)
