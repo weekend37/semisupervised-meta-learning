@@ -6,7 +6,7 @@ from typing import Dict, List
 
 from utils import combine_first_two_axes
 import sys
-sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+sys.path.append("/home/helgi/MetaLearning-TF2.0")
 
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel

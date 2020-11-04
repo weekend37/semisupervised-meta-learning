@@ -3,7 +3,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import sys
-sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+sys.path.append("/home/helgi/MetaLearning-TF2.0")
 
 from databases import MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import MiniImagenetParser
@@ -71,15 +71,21 @@ if __name__ == '__main__':
     ssml_maml_gan = SSMLMAMLGAN(
 
         perc=0.5,
-        ssml_gan=ssml_maml,
+        ssml_maml=ssml_maml,
 
         gan=gan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
         database=mini_imagenet_database,
+<<<<<<< Updated upstream
         network_cls=FiveLayerResNet,
         n=5,
         k_ml=1,
+=======
+        network_cls=MiniImagenetModel,
+        n=1,
+        # k=1,
+>>>>>>> Stashed changes
         k_val_ml=1,
         k_val=1,
         k_val_val=1,
@@ -99,9 +105,14 @@ if __name__ == '__main__':
         val_seed=42,
         val_test_batch_norm_momentum=0.0
     )
+<<<<<<< Updated upstream
   
 
     ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2)
+=======
+
+    ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=0.5)
+>>>>>>> Stashed changes
 
     ssml_maml_gan.train(iterations=15000)
     ssml_maml_gan.evaluate(50, seed=42)

@@ -2,7 +2,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import sys
-sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+sys.path.append("/home/helgi/MetaLearning-TF2.0")
 
 from databases import OmniglotDatabase, MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import OmniglotParser, MiniImagenetParser
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1, checkpoint_freq=1)
+    gan.perform_training(epochs=2, checkpoint_freq=10)
     gan.load_latest_checkpoint()
 
     maml_gan = MAMLGAN(
