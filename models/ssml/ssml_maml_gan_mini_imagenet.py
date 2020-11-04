@@ -1,6 +1,9 @@
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import sys
+sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+
 from databases import MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import MiniImagenetParser
 from models.lasiummamlgan.gan import GAN

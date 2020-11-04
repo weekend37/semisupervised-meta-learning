@@ -1,11 +1,11 @@
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import sys
+sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
-
-# TODO: add imports
-
 
 
 class SSMLMAML(ModelAgnosticMetaLearningModel):
