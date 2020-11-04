@@ -1,6 +1,9 @@
+import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow import keras
 from tensorflow.keras import layers
 
+from utils import combine_first_two_axes
 import sys
 sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
 
