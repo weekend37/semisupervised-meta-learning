@@ -35,7 +35,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1, checkpoint_freq=5)
+    gan.perform_training(epochs=2, checkpoint_freq=5)
     gan.load_latest_checkpoint()
 
     print("-------------------------here--------------------------")
