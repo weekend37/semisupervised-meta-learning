@@ -2,7 +2,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import sys
-sys.path.append("/home/davidegiovanardi/MetaLearning-TF2.0")
+from path import mypath
+sys.path.append(mypath)
+
 
 from databases import OmniglotDatabase, MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import OmniglotParser, MiniImagenetParser
