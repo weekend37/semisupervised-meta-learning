@@ -199,17 +199,3 @@ class SSMLMAMLGAN(MAMLGAN):
                 break
 
             epoch_count += 1
-
-
-# class SSMLMAML(ModelAgnosticMetaLearningModel):
-#     def __init__(self, perc, *args, **kwargs):
-#         super(ModelAgnosticMetaLearningModel, self).__init__(*args, **kwargs)
-#         self.perc = perc
-#
-#     def get_train_dataset(self):
-#         # MAML.get_train
-#         # MAMLGAN.
-
-
-
-

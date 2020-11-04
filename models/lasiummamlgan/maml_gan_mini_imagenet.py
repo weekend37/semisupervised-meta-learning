@@ -134,4 +134,4 @@ if __name__ == '__main__':
     maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2)
 
     maml_gan.train(iterations=30)
-    maml_gan.evaluate(10,100, seed=42)
+    maml_gan.evaluate(10, 100, seed=42)
