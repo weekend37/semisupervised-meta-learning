@@ -104,6 +104,6 @@ if __name__ == '__main__':
 
     ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=0.5)
 
-    ssml_maml_gan.train(iterations=15000)
-    ssml_maml_gan.evaluate(50, seed=42)
+    ssml_maml_gan.train(iterations=60000)
+    ssml_maml_gan.evaluate(10, 100, seed=42)
 
