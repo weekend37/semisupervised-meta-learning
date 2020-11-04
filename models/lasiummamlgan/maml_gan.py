@@ -41,7 +41,7 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
                 for k in range(self.k_val_ml):
                     axes[k + self.k_ml, n].imshow(val_ds[n, k, ...])
 
-            plt.savefig("results/sssml_maml_gan_" + str(perc) + ".png")
+            # plt.savefig("results/sssml_maml_gan_" + str(perc) + ".png")
             plt.show()
 
     def generate_all_vectors_p1(self):

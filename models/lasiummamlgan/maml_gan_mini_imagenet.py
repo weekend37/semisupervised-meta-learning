@@ -5,7 +5,6 @@ import sys
 from path import mypath
 sys.path.append(mypath)
 
-
 from databases import OmniglotDatabase, MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import OmniglotParser, MiniImagenetParser
 from models.lasiummamlgan.gan import GAN
@@ -102,7 +101,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1, checkpoint_freq=1)
+    gan.perform_training(epochs=2, checkpoint_freq=10)
     gan.load_latest_checkpoint()
 
     maml_gan = MAMLGAN(
