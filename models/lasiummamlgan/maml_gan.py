@@ -17,7 +17,7 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
     def get_parse_function(self):
         return self.gan.parser.get_parse_fn()
 
-    def visualize_meta_learning_task(self, shape, num_tasks_to_visualize=1):
+    def visualize_meta_learning_task(self, shape, num_tasks_to_visualize=1, perc=0):
         import matplotlib.pyplot as plt
 
         dataset = self.get_train_dataset()
@@ -41,6 +41,7 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
                 for k in range(self.k_val_ml):
                     axes[k + self.k_ml, n].imshow(val_ds[n, k, ...])
 
+            plt.savefig("results/sssml_maml_gan_" + str(perc) + ".png")
             plt.show()
 
     def generate_all_vectors_p1(self):
