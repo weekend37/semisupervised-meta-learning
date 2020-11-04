@@ -52,11 +52,11 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             def get_instances(class_dir_address):
                 class_dir_address = class_dir_address.numpy().decode('utf-8')
                 instance_names = folders[class_dir_address]
+
+                # make sure we only have a limited subset of data available
                 np.random.seed(seed)
-                idxs = np.random.choice(
-                    np.arange(len(instance_names)),
-                    size=int(self.perc*len(instance_names))
-                )
+                idxs = np.random.choice(len(instance_names),int(self.perc*len(instance_names)))
+
                 instances = np.random.choice(instance_names[idxs], size=k + k_validation, replace=False)
                 return instances[:k], instances[k:k + k_validation]
 
@@ -124,21 +124,37 @@ class SSMLMAMLGAN(MAMLGAN):
         self.ssml_maml = ssml_maml
 
     def merge_train_dataset(self):
+
+        # TODO: Account for self.perc in (0,1)
+        print("#####################")
+        print("###### MERGING ######")
+        print("#####################")
+
         maml_ds = self.ssml_maml.get_train_dataset() # this has correct size
         maml_gan_ds_full = self.get_train_dataset() # still has full size
 
-        # subset the generated data 
-        maml_train_size = tf.data.experimental.cardinality(maml_ds)
-        maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full)
-        maml_gan_train_size = maml_gan_train_size_full - maml_train_size        
-        maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size).as_numpy_iterator() # wrap as list?
-        maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
+        # subset the generated data TODO: How to do this properly??
+
+        # subsetted maml dataset
+        maml_train_size = tf.data.experimental.cardinality(maml_ds).numpy()
+        
+        # full generated dataset
+        #maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
+        # print(maml_gan_train_size_full) # debug
+        # desired size of generated dataset
+        # maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
+        # subset into generated dataset (how to format this properly??)
+        # maml_gan_train_size = int(maml_train_size/self.perc*(1-self.perc))
+        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
+
+        # TODO: Subset generated data to have a constant size of merged dataset
+        maml_gan_ds = maml_gan_ds_full
 
         # debug
-        maml_gan_train_size = tf.data.experimental.cardinality(maml_gan_ds)
-        print(maml_train_size)
-        print(maml_gan_train_size)
-        print(maml_gan_train_size_full)  
+        # maml_gan_train_size = tf.data.experimental.cardinality(maml_gan_ds).numpy()
+        # print("#########################\n"*5)
+        # print(maml_train_size)
+        # print(maml_gan_train_size)
 
         return maml_gan_ds, maml_ds
 
