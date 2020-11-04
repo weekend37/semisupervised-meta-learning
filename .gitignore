@@ -8,4 +8,4 @@ local_settings.py
 *.h5
 *.pdf
 
-# path.py
+ path.py
