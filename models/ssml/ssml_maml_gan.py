@@ -1,13 +1,20 @@
+from abc import abstractmethod
+import numpy as np
+import os
+from tqdm import tqdm
+
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras
 from tensorflow.keras import layers
 from typing import Dict, List
 
-from utils import combine_first_two_axes
 import sys
 from path import mypath
 sys.path.append(mypath)
+
+from utils import combine_first_two_axes, keep_keys_with_greater_than_equal_k_items
+import settings
 
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
@@ -125,6 +132,7 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full)
         maml_gan_train_size = maml_gan_train_size_full - maml_train_size        
         maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size).as_numpy_iterator() # wrap as list?
+        maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
 
         # debug
         maml_gan_train_size = tf.data.experimental.cardinality(maml_gan_ds)

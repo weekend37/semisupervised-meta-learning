@@ -17,7 +17,6 @@ from networks.maml_umtra_networks import SimpleModel, MiniImagenetModel, VGG19Mo
 from models.lasiummamlgan.maml_gan_mini_imagenet import get_generator, get_discriminator
 from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
 
-
 if __name__ == '__main__':
     mini_imagenet_database = MiniImagenetDatabase()
     shape = (84, 84, 3)
