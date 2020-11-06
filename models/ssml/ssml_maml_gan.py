@@ -186,7 +186,8 @@ class SSMLMAMLGAN(MAMLGAN):
                 N_dataset = [N_labeled, N_gen][d] 
                 for i in range(N_dataset):
 
-                    (train_ds, val_ds), (train_labels, val_labels) = dataset[i]
+                    (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next()
+                    print(val_ds)
                     train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
                     train_accuracy_metric.update_state(train_acc)
                     train_loss_metric.update_state(train_loss)
