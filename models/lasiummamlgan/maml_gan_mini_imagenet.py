@@ -11,8 +11,6 @@ from models.lasiummamlgan.gan import GAN
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from networks.maml_umtra_networks import SimpleModel, MiniImagenetModel
 
-
-
 def get_generator(latent_dim):
     latent_inputs = keras.Input(shape=(latent_dim,))
     x = layers.Dense(7 * 7 * 64)(latent_inputs)

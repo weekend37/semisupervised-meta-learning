@@ -125,36 +125,30 @@ class SSMLMAMLGAN(MAMLGAN):
 
     def merge_train_dataset(self):
 
-        # TODO: Account for self.perc in (0,1)
-        print("#####################")
-        print("###### MERGING ######")
-        print("#####################")
+        # TODO: 
+        # - Account for self.perc in (0,1)
+        # - Properly subset the generated data. Is it truly endless?
+
+        print("##################### \n ###### MERGING ###### \n #####################")
 
         maml_ds = self.ssml_maml.get_train_dataset() # this has correct size
-        maml_gan_ds_full = self.get_train_dataset() # still has full size
-
-        # subset the generated data TODO: How to do this properly??
+        maml_gan_ds_full = self.get_train_dataset()  # still has full (original) size (or no size??)
 
         # subsetted maml dataset
         maml_train_size = tf.data.experimental.cardinality(maml_ds).numpy()
-        
-        # full generated dataset
-        #maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
-        # print(maml_gan_train_size_full) # debug
-        # desired size of generated dataset
-        # maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
-        # subset into generated dataset (how to format this properly??)
-        # maml_gan_train_size = int(maml_train_size/self.perc*(1-self.perc))
-        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
 
-        # TODO: Subset generated data to have a constant size of merged dataset
+        # just keep generated data as it is
         maml_gan_ds = maml_gan_ds_full
 
-        # debug
-        # maml_gan_train_size = tf.data.experimental.cardinality(maml_gan_ds).numpy()
-        # print("#########################\n"*5)
-        # print(maml_train_size)
-        # print(maml_gan_train_size)
+        # # full generated dataset
+        # maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
+
+        # # desired size of generated dataset
+        # maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
+
+        # # subset into generated dataset (how to format this properly??)
+        # maml_gan_train_size = int(maml_train_size/self.perc*(1-self.perc))
+        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
 
         return maml_gan_ds, maml_ds
 
@@ -164,9 +158,15 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_gan_train_dataset, maml_train_dataset = self.merge_train_dataset()
 
         iteration_count = self.load_model()
-        # fix
-        cardinality = tf.data.experimental.cardinality(maml_gan_train_dataset) +  tf.data.experimental.cardinality(maml_train_dataset) 
-        epoch_count = iteration_count // cardinality
+
+        # Cardinality function is useless for the generated dataset ??
+        # cardinality = tf.data.experimental.cardinality(maml_gan_train_dataset) +  tf.data.experimental.cardinality(maml_train_dataset)  
+
+        N_labeled = len(maml_train_dataset)
+        N = N_labeled // self.perc # effective dataset length
+        N_gen = int(N*(1-self.perc))
+        epoch_count = iteration_count // N
+
         pbar = tqdm(maml_train_dataset)
 
         train_accuracy_metric = tf.metrics.Mean()
@@ -178,8 +178,13 @@ class SSMLMAMLGAN(MAMLGAN):
         while should_continue:
             
             DS = [maml_gan_train_dataset, maml_train_dataset]
-            for dataset in DS:
-                for (train_ds, val_ds), (train_labels, val_labels) in dataset:
+            for d, dataset in enumerate(DS):
+            
+                # for (train_ds, val_ds), (train_labels, val_labels) in dataset: 
+                N_dataset = [N_labeled, N_gen][d] 
+                for i in range(N_dataset):
+
+                    (train_ds, val_ds), (train_labels, val_labels) = next(dataset)
                     train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
                     train_accuracy_metric.update_state(train_acc)
                     train_loss_metric.update_state(train_loss)
@@ -217,6 +222,7 @@ class SSMLMAMLGAN(MAMLGAN):
                         train_accuracy_metric.result().numpy()
                     ))
                     pbar.update(1)
+                
 
             if iteration_count >= iterations:
                 should_continue = False
