@@ -138,7 +138,7 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_train_size = tf.data.experimental.cardinality(maml_ds).numpy()
 
         # just keep generated data as it is
-        maml_gan_ds = maml_gan_ds_full.as_numpy_iterator()
+        maml_gan_ds = maml_gan_ds_full
 
         # # full generated dataset
         # maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
@@ -186,7 +186,7 @@ class SSMLMAMLGAN(MAMLGAN):
                 N_dataset = [N_labeled, N_gen][d] 
                 for i in range(N_dataset):
 
-                    (train_ds, val_ds), (train_labels, val_labels) = next(dataset)
+                    (train_ds, val_ds), (train_labels, val_labels) = dataset[i]
                     train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
                     train_accuracy_metric.update_state(train_acc)
                     train_loss_metric.update_state(train_loss)
