@@ -139,19 +139,16 @@ class SSMLMAMLGAN(MAMLGAN):
 
         # just keep generated data as it is
         maml_gan_ds = maml_gan_ds_full
-        
-        # subset the generated data 
-        maml_train_size = tf.data.experimental.cardinality(maml_ds).numpy()
-        maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
-        maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
-        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size).as_numpy_iterator() # wrap as list?
-        maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
 
-        # debug
-        maml_gan_train_size = tf.data.experimental.cardinality(maml_gan_ds).numpy()
-        print(maml_train_size)
-        print(maml_gan_train_size)
-        print(maml_gan_train_size_full)  
+        # # full generated dataset
+        # maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
+
+        # # desired size of generated dataset
+        # maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
+
+        # # subset into generated dataset (how to format this properly??)
+        # maml_gan_train_size = int(maml_train_size/self.perc*(1-self.perc))
+        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
 
         return maml_gan_ds, maml_ds
 
