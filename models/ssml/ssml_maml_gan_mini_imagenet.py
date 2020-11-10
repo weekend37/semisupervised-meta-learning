@@ -33,6 +33,7 @@ if __name__ == '__main__':
     # for f in folders:
     #   all_images = os.GET_ALL_IMAGES_IN_THAT_FOLDER # not sure what the syntax is
     #   L[f] = np.random.choose(all_images)
+    L = 5
 
     # for the SSGAN we need to feed the labels, L, when initializing
     gan = GAN(
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     ssml_maml = SSMLMAML(
         
         perc=labeled_percentage,
-        accessable_labels = None, # This should be L if L is defined
+        accessible_labels = L, 
 
         database=mini_imagenet_database,
         network_cls=MiniImagenetModel,
@@ -84,7 +85,7 @@ if __name__ == '__main__':
     ssml_maml_gan = SSMLMAMLGAN(
 
         perc=labeled_percentage,
-        accessable_labels = None, # This should be L if L is defined
+        accessible_labels = L, # This should be L if L is defined
         ssml_maml=ssml_maml,
 
         gan=gan,
@@ -114,7 +115,7 @@ if __name__ == '__main__':
         val_test_batch_norm_momentum=0.0
     )
 
-    ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=0.5)
+    ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=labeled_percentage)
 
     ssml_maml_gan.train(iterations=60000)
     ssml_maml_gan.evaluate(10, 100, seed=42)
