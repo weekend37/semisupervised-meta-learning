@@ -20,9 +20,10 @@ from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
 
 class SSMLMAML(ModelAgnosticMetaLearningModel):
-    def __init__(self, perc, *args, **kwargs):
+    def __init__(self, perc, accessable_labels, *args, **kwargs):
         super(SSMLMAML, self).__init__(*args, **kwargs)
         self.perc = perc
+        self.accessable_labels = accessable_labels
 
     def get_supervised_meta_learning_dataset(
         self,
@@ -53,11 +54,17 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
                 class_dir_address = class_dir_address.numpy().decode('utf-8')
                 instance_names = folders[class_dir_address]
 
-                # make sure we only have a limited subset of data available
-                np.random.seed(seed)
-                idxs = np.random.choice(len(instance_names),int(self.perc*len(instance_names)))
+                if self.accessable_labels is None:
+                    # make sure we only have a limited subset of data available
+                    np.random.seed(seed)
+                    idxs = np.random.choice(len(instance_names),int(self.perc*len(instance_names)))
+                    instances = np.random.choice(instance_names[idxs], size=k + k_validation, replace=False)
+                else:
+                    print("TODO: IMPLEMENT USAGE OF ACCESSABLE LABELS")
+                    # TODO: Implement usage of accessable labels
+                    # maybe somethine like:
+                    # instances = self.accessible_labels[class_dir_address]
 
-                instances = np.random.choice(instance_names[idxs], size=k + k_validation, replace=False)
                 return instances[:k], instances[k:k + k_validation]
 
             return tf.py_function(get_instances, inp=[class_dir_address], Tout=[tf.string, tf.string])
@@ -118,9 +125,10 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
     
 
 class SSMLMAMLGAN(MAMLGAN):
-    def __init__(self, perc, ssml_maml, *args, **kwargs):
+    def __init__(self, accessible_labels, perc, ssml_maml, *args, **kwargs):
         super(SSMLMAMLGAN, self).__init__(*args, **kwargs)
         self.perc = perc
+        self.accessible_labels = accessible_labels
         self.ssml_maml = ssml_maml
 
     def merge_train_dataset(self):
