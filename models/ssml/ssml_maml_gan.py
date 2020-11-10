@@ -165,7 +165,7 @@ class SSMLMAMLGAN(MAMLGAN):
         self.val_summary_writer = tf.summary.create_file_writer(self.val_log_dir)
         maml_gan_train_dataset, maml_train_dataset = self.merge_train_dataset()
 
-        iteration_count = self.load_model()
+        iteration_count = self.load_model() # this thing might be questionable (?)
 
         # Cardinality function is useless for the generated dataset ??
         # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
