@@ -39,7 +39,7 @@ class VisualizationCallback(tf.keras.callbacks.TensorBoard):
                 # tf.summary.image(name='x', data=image, step=epoch, max_outputs=5)
 
 
-class GAN(tf.keras.models.Model):
+class SSMLGAN(tf.keras.models.Model):
     def __init__(
             self,
             gan_name,

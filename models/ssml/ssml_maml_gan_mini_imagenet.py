@@ -3,6 +3,7 @@ import tensorflow_hub as hub
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import time
 import sys
 from path import mypath
 sys.path.append(mypath)
@@ -48,11 +49,13 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1, checkpoint_freq=5)
+    gan.perform_training(epochs=0, checkpoint_freq=5)
     gan.load_latest_checkpoint()
 
     print("-------------------------here--------------------------")
-    
+    print("training GAN is done")
+    time.sleep(10)
+
     ssml_maml = SSMLMAML(
         
         perc=labeled_percentage,
@@ -117,6 +120,6 @@ if __name__ == '__main__':
 
     ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=labeled_percentage)
 
-    ssml_maml_gan.train(iterations=60000)
+    ssml_maml_gan.train(iterations=10000)
     ssml_maml_gan.evaluate(10, 100, seed=42)
 

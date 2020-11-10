@@ -7,8 +7,8 @@ sys.path.append(mypath)
 
 from databases import OmniglotDatabase
 from models.lasiummamlgan.database_parsers import OmniglotParser
-from models.lasiummamlgan.gan import GAN
-from models.lasiummamlgan.maml_gan import MAMLGAN
+from models.ssml_omniglot.gan import SSMLGAN
+from models.ssml_omniglot.maml_gan import SSMLMAMLGAN
 from networks.maml_umtra_networks import SimpleModel
 
 def get_generator(latent_dim):
@@ -61,7 +61,8 @@ if __name__ == '__main__':
     omniglot_discriminator = get_discriminator()
     omniglot_parser = OmniglotParser(shape=shape)
 
-    gan = GAN(
+
+    gan = SSMLGAN(
         'omniglot',
         image_shape=shape,
         latent_dim=latent_dim,
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     gan.perform_training(epochs=500, checkpoint_freq=50)
     gan.load_latest_checkpoint()
 
-    maml_gan = MAMLGAN(
+    maml_gan = SSMLMAMLGAN(
         gan=gan,
         latent_dim=latent_dim,
         generated_image_shape=shape,

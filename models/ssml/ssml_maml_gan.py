@@ -53,6 +53,8 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             def get_instances(class_dir_address):
                 class_dir_address = class_dir_address.numpy().decode('utf-8')
                 instance_names = folders[class_dir_address]
+                print(instance_names[0])
+                print(instance_names)
 
                 if self.accessible_labels is None:
                     # make sure we only have a limited subset of data available

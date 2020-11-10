@@ -1,10 +1,10 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-from models.maml.maml import ModelAgnosticMetaLearningModel
+from models.ssmlmaml.ssmlmaml import SSMLMAML
 from utils import combine_first_two_axes
 
 
-class MAMLGAN(ModelAgnosticMetaLearningModel):
+class SSMLMAMLGAN(ModelAgnosticMetaLearningModel):
     def __init__(self, gan, latent_dim, generated_image_shape, *args, **kwargs):
         super(MAMLGAN, self).__init__(*args, **kwargs)
         self.gan = gan
