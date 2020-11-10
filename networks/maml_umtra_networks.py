@@ -8,7 +8,7 @@ class SimpleModel(tf.keras.Model):
     name = 'SimpleModel'
 
     def __init__(self, num_classes):
-        super(SimpleModel, self).__init__(name='simple_model')
+        super(SimpleModel, self).__init__(name='SimpleModel')
 
         self.conv1 = tf.keras.layers.Conv2D(64, 3, name='conv1', strides=(2, 2), padding='same')
         self.bn1 = tf.keras.layers.BatchNormalization(center=True, scale=False, name='bn1')
