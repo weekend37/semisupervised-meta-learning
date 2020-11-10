@@ -160,12 +160,12 @@ class SSMLMAMLGAN(MAMLGAN):
         iteration_count = self.load_model()
 
         # Cardinality function is useless for the generated dataset ??
-        # cardinality = tf.data.experimental.cardinality(maml_gan_train_dataset) +  tf.data.experimental.cardinality(maml_train_dataset)  
+        # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
 
-        N_labeled = len(maml_train_dataset)
-        # print("N LABELED: ", N_labeled)
-        N = N_labeled // self.perc # effective dataset length
-        N_gen = int(N*(1-self.perc))
+        N_labeled = len(maml_train_dataset) # for 50%, this gives 3 (???)
+        # N_labeled = len(list(maml_train_dataset)) # try this
+        N = N_labeled // self.perc # effective dataset length 3/0.5 = 6
+        N_gen = N - N_labeled # 6-3
         epoch_count = iteration_count // N
 
         pbar = tqdm(maml_train_dataset)
@@ -181,14 +181,16 @@ class SSMLMAMLGAN(MAMLGAN):
             DS = [maml_gan_train_dataset, maml_train_dataset]
             for d, dataset in enumerate(DS):
 
-                # print("\nDATASET:", ["generated data","labeled data"][d])
+                print("DATASET:", ["generated data", "labeled data"][d])
             
                 # for (train_ds, val_ds), (train_labels, val_labels) in dataset: 
-                N_dataset = [N_labeled, N_gen][d] 
-                for i in range(N_dataset):
+                N_dataset = [N_gen, N_labeled][d] 
+                for _ in range(N_dataset):
 
                     (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next()
-                    # print("DAT:", val_ds[0][0][0][0][0][0])
+
+                    # print(val_ds[0][0][0][0][0][0]) # this sequence is different for each epoch?!?!
+                    
                     train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
                     train_accuracy_metric.update_state(train_acc)
                     train_loss_metric.update_state(train_loss)
