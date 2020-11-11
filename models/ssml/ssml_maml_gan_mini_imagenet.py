@@ -85,7 +85,7 @@ if __name__ == '__main__':
     ssml_maml_gan = SSMLMAMLGAN(
 
         perc=labeled_percentage,
-        accessible_labels = L, # This should be L if L is defined
+        accessible_labels = L, 
         ssml_maml=ssml_maml,
 
         gan=gan,

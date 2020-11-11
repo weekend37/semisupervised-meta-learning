@@ -122,7 +122,6 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             dataset = dataset.batch(meta_batch_size, drop_remainder=True)
 
         return dataset
-    
 
 class SSMLMAMLGAN(MAMLGAN):
     def __init__(self, perc, accessible_labels, ssml_maml, *args, **kwargs):
@@ -131,47 +130,19 @@ class SSMLMAMLGAN(MAMLGAN):
         self.accessible_labels = accessible_labels
         self.ssml_maml = ssml_maml
 
-    def merge_train_dataset(self):
-
-        # TODO: 
-        # - Account for self.perc in (0,1)
-        # - Properly subset the generated data. Is it truly endless?
-
-        print("##################### \n ###### MERGING ###### \n #####################")
-
-        maml_ds = self.ssml_maml.get_train_dataset() # this has correct size
-        maml_gan_ds_full = self.get_train_dataset()  # still has full (original) size (or no size??)
-
-        # subsetted maml dataset
-        maml_train_size = tf.data.experimental.cardinality(maml_ds).numpy()
-
-        # just keep generated data as it is
-        maml_gan_ds = maml_gan_ds_full
-
-        # # full generated dataset
-        # maml_gan_train_size_full = tf.data.experimental.cardinality(maml_gan_ds_full).numpy()
-
-        # # desired size of generated dataset
-        # maml_gan_train_size = np.copy(maml_gan_train_size_full - maml_train_size)
-
-        # # subset into generated dataset (how to format this properly??)
-        # maml_gan_train_size = int(maml_train_size/self.perc*(1-self.perc))
-        # maml_gan_ds = maml_gan_ds_full.take(maml_gan_train_size)
-
-        return maml_gan_ds, maml_ds
-
     def train(self, iterations=5):
         self.train_summary_writer = tf.summary.create_file_writer(self.train_log_dir)
         self.val_summary_writer = tf.summary.create_file_writer(self.val_log_dir)
-        maml_gan_train_dataset, maml_train_dataset = self.merge_train_dataset()
+
+        maml_train_dataset = self.ssml_maml.get_train_dataset()
+        maml_gan_train_dataset = self.get_train_dataset()
 
         iteration_count = self.load_model() # this thing might be questionable (?)
 
-        # Cardinality function is useless for the generated dataset ??
         # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
 
-        N_labeled = len(maml_train_dataset) # for 50%, this gives 3 (???)
-        # N_labeled = len(list(maml_train_dataset)) # try this
+        N_labeled = len(maml_train_dataset)
+        print(" #### ### ## # N_labeled:", N_labeled)
         N = N_labeled // self.perc # effective dataset length 3/0.5 = 6
         N_gen = N - N_labeled # 6-3
         epoch_count = iteration_count // N
