@@ -169,7 +169,7 @@ class SSMLMAMLGAN(MAMLGAN):
 
             for d, dataset in enumerate([maml_gan_train_dataset, maml_train_dataset]):
 
-                print("DATASET:", ["generated data", "labeled data"][d])
+                print("\n\nDATASET:", ["generated data", "labeled data"][d])
             
                 N_dataset = [N_gen, N_labeled][d]
                 iteration_count_inner = 0
@@ -217,6 +217,8 @@ class SSMLMAMLGAN(MAMLGAN):
                     pbar.update(1)
 
                     iteration_count_inner += 1
+                    which_data = ['gen_data','label_data'][d]
+                    print(f"\n\nThis is the {iteration_count_inner}th iteration in {which_data}\n")
                     if iteration_count_inner % N_dataset == 0:
                         break
 
