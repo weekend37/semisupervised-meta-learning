@@ -172,10 +172,28 @@ class SSMLMAMLGAN(MAMLGAN):
         # Cardinality function is useless for the generated dataset ??
         # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
 
+        ## DEBUG
+        # cardinality = tf.data.experimental.cardinality(maml_gan_train_dataset)
+        cardinality = tf.data.experimental.cardinality(maml_train_dataset)        
+        print(cardinality)
+        # print(len(maml_gan_train_dataset))
+        # print((cardinality == tf.data.experimental.INFINITE_CARDINALITY).numpy())
+        # print((cardinality == tf.data.experimental.UNKNOWN_CARDINALITY).numpy())
+        for i, element in enumerate(maml_train_dataset):
+            print("--------------------------------------------------------")
+            print("--------------------------------------------------------")
+            if i == 0:
+                print("here")
+            else:
+                print("other here")
+                print(i)
+                # print(element)
+        ## DEBUG
+        
         N_labeled = len(maml_train_dataset) # for 50%, this gives 3 (???)
         # N_labeled = len(list(maml_train_dataset)) # try this
         N = N_labeled // self.perc # effective dataset length 3/0.5 = 6
-        N_gen = N - N_labeled # 6-3
+        N_gen = int(N - N_labeled) # 6-3
         epoch_count = iteration_count // N
 
         pbar = tqdm(maml_train_dataset)

@@ -25,7 +25,7 @@ if __name__ == '__main__':
     mini_imagenet_generator = get_generator(latent_dim)
     mini_imagenet_discriminator = get_discriminator()
     mini_imagenet_parser = MiniImagenetParser(shape=shape)
-    labeled_percentage = 0.5
+    labeled_percentage = 1.
 
     # Here we want to choose what labels we have access to through out this wohle process. 
     # if L is the dictionary containing this information then maybe something like:
