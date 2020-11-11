@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # for f in folders:
     #   all_images = os.GET_ALL_IMAGES_IN_THAT_FOLDER # not sure what the syntax is
     #   L[f] = np.random.choose(all_images)
-    L = 5
+    L = None
 
     # for the SSGAN we need to feed the labels, L, when initializing
     gan = GAN(
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     gan.load_latest_checkpoint()
 
     print("training GAN is done")
-    time.sleep(10)
+    time.sleep(1)
 
     ssml_maml = SSMLMAML(
         

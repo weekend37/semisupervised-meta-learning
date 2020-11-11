@@ -291,7 +291,8 @@ class BaseDataLoader(object):
         dataset = tf.data.Dataset.from_tensor_slices(sorted(list(folders.keys())))
         if seed != -1:
             dataset = dataset.shuffle(
-                buffer_size=buffer_size,
+                # buffer_size=buffer_size,
+                buffer_size=len(folders.keys()),
                 reshuffle_each_iteration=reshuffle_each_iteration,
                 seed=seed
             )
@@ -299,7 +300,8 @@ class BaseDataLoader(object):
             dataset = dataset.map(_get_instances, num_parallel_calls=1)
         else:
             dataset = dataset.shuffle(
-                buffer_size=buffer_size,
+                # buffer_size=buffer_size,
+                buffer_size=len(folders.keys()),
                 reshuffle_each_iteration=reshuffle_each_iteration
             )
             dataset = dataset.map(_get_instances, num_parallel_calls=tf.data.experimental.AUTOTUNE)

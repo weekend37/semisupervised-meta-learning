@@ -37,7 +37,7 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
         seed: int = 94305,
         dtype=tf.float32,  # The input dtype
         instance_parse_function=None,
-        buffer_size = 1
+        buffer_size=1
     ) -> tf.data.Dataset:
         """
             Folders are dictionary
@@ -98,7 +98,8 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
         dataset = tf.data.Dataset.from_tensor_slices(sorted(list(folders.keys())))
         if seed != -1:
             dataset = dataset.shuffle(
-                buffer_size=buffer_size,
+                # buffer_size=buffer_size,
+                buffer_size=len(folders.keys()),
                 reshuffle_each_iteration=reshuffle_each_iteration,
                 seed=seed
             )
@@ -106,7 +107,8 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             dataset = dataset.map(_get_instances, num_parallel_calls=1)
         else:
             dataset = dataset.shuffle(
-                buffer_size=buffer_size,
+                # buffer_size=buffer_size,
+                buffer_size=len(folders.keys()),
                 reshuffle_each_iteration=reshuffle_each_iteration
             )
             dataset = dataset.map(_get_instances, num_parallel_calls=tf.data.experimental.AUTOTUNE)
