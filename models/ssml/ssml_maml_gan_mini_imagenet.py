@@ -49,11 +49,14 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=0, checkpoint_freq=5)
+
+    GAN_EPOCHS = 1
+    print("Training GAN for", GAN_EPOCHS,"epochs")
+    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=min(5,GAN_EPOCHS))
     gan.load_latest_checkpoint()
 
     print("training GAN is done")
-    time.sleep(10)
+    time.sleep(1)
 
     ssml_maml = SSMLMAML(
         

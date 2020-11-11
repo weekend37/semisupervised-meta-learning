@@ -172,7 +172,6 @@ class BaseModel(metaclass=SetupCaller):
                 #     tf.summary.histogram(f'updated_model_{k}_' + str(var_count), var, step=iteration_count)
 
     def get_train_dataset(self):
-        print("aha!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return self.data_loader.get_train_dataset()
 
     def get_val_dataset(self):
