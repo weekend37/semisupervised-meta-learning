@@ -52,7 +52,6 @@ if __name__ == '__main__':
     gan.perform_training(epochs=0, checkpoint_freq=5)
     gan.load_latest_checkpoint()
 
-    print("-------------------------here--------------------------")
     print("training GAN is done")
     time.sleep(10)
 

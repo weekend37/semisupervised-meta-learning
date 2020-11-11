@@ -36,7 +36,8 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
         reshuffle_each_iteration: bool = True,
         seed: int = 94305,
         dtype=tf.float32,  # The input dtype
-        instance_parse_function=None
+        instance_parse_function=None,
+        buffer_size = 1
     ) -> tf.data.Dataset:
         """
             Folders are dictionary
@@ -97,7 +98,7 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
         dataset = tf.data.Dataset.from_tensor_slices(sorted(list(folders.keys())))
         if seed != -1:
             dataset = dataset.shuffle(
-                buffer_size=len(folders.keys()),
+                buffer_size=buffer_size,
                 reshuffle_each_iteration=reshuffle_each_iteration,
                 seed=seed
             )
@@ -105,7 +106,7 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             dataset = dataset.map(_get_instances, num_parallel_calls=1)
         else:
             dataset = dataset.shuffle(
-                buffer_size=len(folders.keys()),
+                buffer_size=buffer_size,
                 reshuffle_each_iteration=reshuffle_each_iteration
             )
             dataset = dataset.map(_get_instances, num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -164,13 +165,11 @@ class SSMLMAMLGAN(MAMLGAN):
 
                 print("DATASET:", ["generated data", "labeled data"][d])
             
-                # for (train_ds, val_ds), (train_labels, val_labels) in dataset: 
                 N_dataset = [N_gen, N_labeled][d] 
                 for _ in range(N_dataset):
 
-                    (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next()
-
-                    # print(val_ds[0][0][0][0][0][0]) # this sequence is different for each epoch?!?!
+                    # take didn't work, this just queries the generator for one meta detaset
+                    (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next() 
                     
                     train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
                     train_accuracy_metric.update_state(train_acc)
