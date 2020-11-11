@@ -74,10 +74,13 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=500, checkpoint_freq=50)
+    #gan.perform_training(epochs=1, checkpoint_freq=50)
     gan.load_latest_checkpoint()
-
+    
+    iterations=1000
     maml_gan = SSMLMAMLGAN(
+        perc=0.5,
+        iterations=iterations,
         gan=gan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
@@ -107,5 +110,5 @@ if __name__ == '__main__':
 
     # maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2)
 
-    maml_gan.train(iterations=1000)
+    maml_gan.train(iterations=iterations)
     maml_gan.evaluate(50,100, seed=42)

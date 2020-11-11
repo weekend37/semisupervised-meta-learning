@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from models.base_data_loader import BaseDataLoader
-from models.base_model import BaseModel
+from models.ssml_omniglot.base_modelSSML import BaseModel
 from utils import combine_first_two_axes
 import settings
 
@@ -44,7 +44,7 @@ class SSMLMAML(BaseModel):
         val_database=None,
         test_database=None,
     ):
-        super(ModelAgnosticMetaLearningModel, self).__init__(
+        super(SSMLMAML, self).__init__(
             database=database,
             data_loader_cls=BaseDataLoader,
             network_cls=network_cls,
