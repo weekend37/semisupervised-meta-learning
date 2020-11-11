@@ -173,54 +173,57 @@ class SSMLMAMLGAN(MAMLGAN):
             
                 N_dataset = [N_gen, N_labeled][d]
                 iteration_count_inner = 0
-                for (train_ds, val_ds), (train_labels, val_labels) in dataset:
+                should_continue_inner = iteration_count_inner < N_dataset
+                while should_continue_inner:
+                    for (train_ds, val_ds), (train_labels, val_labels) in dataset:
 
-                    # take didn't work, this just queries the generator for one meta detaset
-                    # (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next()
-                    
-                    train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
-                    train_accuracy_metric.update_state(train_acc)
-                    train_loss_metric.update_state(train_loss)
-                    iteration_count += 1
-                    if (
-                        self.log_train_images_after_iteration != -1 and
-                        iteration_count % self.log_train_images_after_iteration == 0
-                    ):
-                        self.log_images(
-                            self.train_summary_writer,
-                            combine_first_two_axes(train_ds[0, ...]),
-                            combine_first_two_axes(val_ds[0, ...]),
-                            step=iteration_count
-                        )
-                        self.log_histograms(step=iteration_count)
+                        # take didn't work, this just queries the generator for one meta detaset
+                        # (train_ds, val_ds), (train_labels, val_labels) = iter(dataset).next()
 
-                    if iteration_count != 0 and iteration_count % self.save_after_iterations == 0:
-                        self.save_model(iteration_count)
+                        train_acc, train_loss = self.meta_train_loop(train_ds, val_ds, train_labels, val_labels)
+                        train_accuracy_metric.update_state(train_acc)
+                        train_loss_metric.update_state(train_loss)
+                        iteration_count += 1
+                        if (
+                            self.log_train_images_after_iteration != -1 and
+                            iteration_count % self.log_train_images_after_iteration == 0
+                        ):
+                            self.log_images(
+                                self.train_summary_writer,
+                                combine_first_two_axes(train_ds[0, ...]),
+                                combine_first_two_axes(val_ds[0, ...]),
+                                step=iteration_count
+                            )
+                            self.log_histograms(step=iteration_count)
 
-                    if iteration_count % self.report_validation_frequency == 0:
-                        self.report_validation_loss_and_accuracy(iteration_count)
-                        if iteration_count != 0:
-                            print('Train Loss: {}'.format(train_loss_metric.result().numpy()))
-                            print('Train Accuracy: {}'.format(train_accuracy_metric.result().numpy()))
-                        with self.train_summary_writer.as_default():
-                            tf.summary.scalar('Loss', train_loss_metric.result(), step=iteration_count)
-                            tf.summary.scalar('Accuracy', train_accuracy_metric.result(), step=iteration_count)
-                        train_accuracy_metric.reset_states()
-                        train_loss_metric.reset_states()
+                        if iteration_count != 0 and iteration_count % self.save_after_iterations == 0:
+                            self.save_model(iteration_count)
 
-                    pbar.set_description_str('Epoch{}, Iteration{}: Train Loss: {}, Train Accuracy: {}'.format(
-                        epoch_count,
-                        iteration_count,
-                        train_loss_metric.result().numpy(),
-                        train_accuracy_metric.result().numpy()
-                    ))
-                    pbar.update(1)
+                        if iteration_count % self.report_validation_frequency == 0:
+                            self.report_validation_loss_and_accuracy(iteration_count)
+                            if iteration_count != 0:
+                                print('Train Loss: {}'.format(train_loss_metric.result().numpy()))
+                                print('Train Accuracy: {}'.format(train_accuracy_metric.result().numpy()))
+                            with self.train_summary_writer.as_default():
+                                tf.summary.scalar('Loss', train_loss_metric.result(), step=iteration_count)
+                                tf.summary.scalar('Accuracy', train_accuracy_metric.result(), step=iteration_count)
+                            train_accuracy_metric.reset_states()
+                            train_loss_metric.reset_states()
 
-                    iteration_count_inner += 1
-                    which_data = ['gen_data','label_data'][d]
-                    print(f"\n\nThis is the {iteration_count_inner}th iteration in {which_data}\n")
-                    if iteration_count_inner % N_dataset == 0:
-                        break
+                        pbar.set_description_str('Epoch{}, Iteration{}: Train Loss: {}, Train Accuracy: {}'.format(
+                            epoch_count,
+                            iteration_count,
+                            train_loss_metric.result().numpy(),
+                            train_accuracy_metric.result().numpy()
+                        ))
+                        pbar.update(1)
+
+                        iteration_count_inner += 1
+                        which_data = ['gen_data','label_data'][d]
+                        print(f"\n\nThis is the {iteration_count_inner}th iteration in {which_data}\n")
+                        if iteration_count_inner >= N_dataset:
+                            should_continue_inner = False
+                            break
 
             if iteration_count >= iterations:
                 should_continue = False
