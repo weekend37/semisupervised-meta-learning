@@ -1,15 +1,21 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-from models.maml.maml import ModelAgnosticMetaLearningModel
+from models.ssml_omniglot.ssmlmaml import SSMLMAML
 from utils import combine_first_two_axes
+import numpy as np
+from models.base_data_loader import BaseDataLoader
 
-
-class MAMLGAN(ModelAgnosticMetaLearningModel):
-    def __init__(self, gan, latent_dim, generated_image_shape, *args, **kwargs):
-        super(MAMLGAN, self).__init__(*args, **kwargs)
+class SSMLMAMLGAN(SSMLMAML):
+    def __init__(self, gan, latent_dim, generated_image_shape, perc, iterations, *args, **kwargs):
+        super(SSMLMAMLGAN, self).__init__(*args, **kwargs)
         self.gan = gan
         self.latent_dim = latent_dim
         self.generated_image_shape = generated_image_shape
+        self.nGeneratedData = 0
+        self.numIterations = iterations
+        self.labeledIterations = np.random.choice(self.numIterations, int(perc*self.numIterations))
+        data_loader_cls = BaseDataLoader
+        self.data_loader = self.init_data_loader(data_loader_cls)
 
     def get_network_name(self):
         return self.model.name
@@ -105,6 +111,27 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
     def get_images_from_vectors(self, vectors):
         return self.gan.generator(vectors)
 
+    def init_data_loader(self, data_loader_cls):
+        return data_loader_cls(
+            database=self.database,
+            val_database=self.val_database,
+            test_database=self.test_database,
+            n=self.n,
+            k_ml=self.k_ml,
+            k_val_ml=self.k_val_ml,
+            k_val=self.k_val,
+            k_val_val=self.k_val_val,
+            k_test=self.k_test,
+            k_val_test=self.k_val_test,
+            meta_batch_size=self.meta_batch_size,
+            num_tasks_val=self.num_tasks_val,
+            val_seed=self.val_seed
+        )
+
+    #WS: helper function similar to base_model.py
+    def get_train_dataset_with_labels(self):
+        return(self.data_loader.get_train_dataset())
+
     def get_train_dataset(self):
         train_labels = tf.repeat(tf.range(self.n), self.k_ml)
         train_labels = tf.one_hot(train_labels, depth=self.n)
@@ -122,28 +149,41 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
         val_indices = [i // self.k_val_ml + i % self.k_val_ml * self.n for i in range(self.n * self.k_val_ml)]
 
         def get_task():
-            meta_batch_vectors = list()
+            #WS: if iteration is not in an iteration where we want to use labeled data
+            if self.nGeneratedData in self.labeledIterations:
+                dataset = self.get_train_dataset_with_labels()
+                for (train_ds, val_ds), (train_labels, val_labels) in dataset:
+                    print("what it is:")
+                    print("train_ds: {}".format(train_ds.shape))
+                    print(val_ds.shape)
+                    print(train_labels.shape)
+                    print(val_labels.shape)
+                yield dataset
 
-            for meta_batch in range(self.meta_batch_size):
-                vectors = self.generate_all_vectors()
-                vectors = tf.reshape(tf.stack(vectors, axis=0), (-1, self.latent_dim))
-                meta_batch_vectors.append(vectors)
+            else:
+                print("number of generated data: {}".format(self.nGeneratedData))
+                meta_batch_vectors = list()
+                self.nGeneratedData +=1
+                for meta_batch in range(self.meta_batch_size):
+                    vectors = self.generate_all_vectors()
+                    vectors = tf.reshape(tf.stack(vectors, axis=0), (-1, self.latent_dim))
+                    meta_batch_vectors.append(vectors)
 
-            meta_batch_vectors = tf.stack(meta_batch_vectors)
-            meta_batch_vectors = combine_first_two_axes(meta_batch_vectors)
-            images = self.get_images_from_vectors(meta_batch_vectors)
-            images = tf.image.resize(images, self.generated_image_shape[:2])
-            images = tf.reshape(
-                images,
-                (self.meta_batch_size, self.n * (self.k_ml + self.k_val_ml), *self.generated_image_shape)
-            )
+                meta_batch_vectors = tf.stack(meta_batch_vectors)
+                meta_batch_vectors = combine_first_two_axes(meta_batch_vectors)
+                images = self.get_images_from_vectors(meta_batch_vectors)
+                images = tf.image.resize(images, self.generated_image_shape[:2])
+                images = tf.reshape(
+                    images,
+                    (self.meta_batch_size, self.n * (self.k_ml + self.k_val_ml), *self.generated_image_shape)
+                )
 
-            train_ds = images[:, :self.n * self.k_ml, ...]
-            train_ds = tf.gather(train_ds, train_indices, axis=1)
-            train_ds = tf.reshape(train_ds, (self.meta_batch_size, self.n, self.k_ml, *self.generated_image_shape))
+                train_ds = images[:, :self.n * self.k_ml, ...]
+                train_ds = tf.gather(train_ds, train_indices, axis=1)
+                train_ds = tf.reshape(train_ds, (self.meta_batch_size, self.n, self.k_ml, *self.generated_image_shape))
 
-            val_ds = images[:, self.n * self.k_ml:, ...]
-            val_ds = combine_first_two_axes(val_ds)
+                val_ds = images[:, self.n * self.k_ml:, ...]
+                val_ds = combine_first_two_axes(val_ds)
             # Process val if needed
             # val_imgs = list()
             # for i in range(val_ds.shape[0]):
@@ -156,16 +196,21 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
             #
             # val_ds = tf.stack(val_imgs, axis=0)
 
-            val_ds = tf.reshape(val_ds, (self.meta_batch_size, self.n * self.k_val_ml, *self.generated_image_shape))
-            val_ds = tf.gather(val_ds, val_indices, axis=1)
-            val_ds = tf.reshape(val_ds, (self.meta_batch_size, self.n, self.k_val_ml, *self.generated_image_shape))
+                val_ds = tf.reshape(val_ds, (self.meta_batch_size, self.n * self.k_val_ml, *self.generated_image_shape))
+                val_ds = tf.gather(val_ds, val_indices, axis=1)
+                val_ds = tf.reshape(val_ds, (self.meta_batch_size, self.n, self.k_val_ml, *self.generated_image_shape))
 
-            yield (train_ds, val_ds), (train_labels, val_labels)
+                print("what it should be:")
+                print("train_ds: {}".format(train_ds.shape))
+                print(val_ds.shape)
+                print(train_labels.shape)
+                print(val_labels.shape)
+                yield (train_ds, val_ds), (train_labels, val_labels)
 
         dataset = tf.data.Dataset.from_generator(
             get_task,
             output_types=((tf.float32, tf.float32), (tf.float32, tf.float32))
         )
-        
+
         setattr(dataset, 'steps_per_epoch', tf.data.experimental.cardinality(dataset))
         return dataset

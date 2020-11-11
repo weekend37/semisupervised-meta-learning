@@ -39,7 +39,7 @@ class VisualizationCallback(tf.keras.callbacks.TensorBoard):
                 # tf.summary.image(name='x', data=image, step=epoch, max_outputs=5)
 
 
-class GAN(tf.keras.models.Model):
+class SSMLGAN(tf.keras.models.Model):
     def __init__(
             self,
             gan_name,
@@ -54,7 +54,7 @@ class GAN(tf.keras.models.Model):
             visualization_freq,
             **kwargs
     ):
-        super(GAN, self).__init__(**kwargs)
+        super(SSMLGAN, self).__init__(**kwargs)
         self.latent_dim = latent_dim
         self.database = database
         self.parser = parser
@@ -74,7 +74,7 @@ class GAN(tf.keras.models.Model):
         self.g_loss_metric = tf.keras.metrics.Mean()
 
     def compile(self, d_optimizer, g_optimizer, loss_fn):
-        super(GAN, self).compile()
+        super(SSMLGAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
         self.loss_fn = loss_fn

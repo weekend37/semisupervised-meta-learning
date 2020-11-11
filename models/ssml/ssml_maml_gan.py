@@ -53,6 +53,8 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             def get_instances(class_dir_address):
                 class_dir_address = class_dir_address.numpy().decode('utf-8')
                 instance_names = folders[class_dir_address]
+                print(instance_names[0])
+                print(instance_names)
 
                 if self.accessible_labels is None:
                     # make sure we only have a limited subset of data available
@@ -144,7 +146,7 @@ class SSMLMAMLGAN(MAMLGAN):
         N_labeled = len(maml_train_dataset)
         print(" #### ### ## # N_labeled:", N_labeled)
         N = N_labeled // self.perc # effective dataset length 3/0.5 = 6
-        N_gen = N - N_labeled # 6-3
+        N_gen = int(N - N_labeled) # 6-3
         epoch_count = iteration_count // N
 
         pbar = tqdm(maml_train_dataset)
