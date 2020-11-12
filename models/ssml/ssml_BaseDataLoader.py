@@ -111,7 +111,6 @@ class SSMLBaseDataLoader(BaseDataLoader):
         dataset = tf.data.Dataset.zip((dataset, labels_dataset))
 
         steps_per_epoch = tf.data.experimental.cardinality(dataset)
-        print("Steps per epoch:", steps_per_epoch)
         if steps_per_epoch == 0:
             dataset = dataset.repeat(-1).take(meta_batch_size).batch(meta_batch_size)
         else:
