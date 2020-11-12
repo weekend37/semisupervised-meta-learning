@@ -25,11 +25,13 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
         super(SSMLMAML, self).__init__(*args, **kwargs)
         self.perc = perc
         self.accessible_labels = accessible_labels
-        data_loader_cls = SSMLBaseDataLoader(perc, accessible_labels)
-        self.data_loader = self.init_data_loader(data_loader_cls)
+        data_loader_cls = SSMLBaseDataLoader
+        self.data_loader = self.init_ssml_data_loader(data_loader_cls)
 
-    def init_data_loader(self, data_loader_cls):
+    def init_ssml_data_loader(self, data_loader_cls):
         return data_loader_cls(
+            perc=self.perc,
+            accessible_labels=self.accessible_labels,
             database=self.database,
             val_database=self.val_database,
             test_database=self.test_database,
