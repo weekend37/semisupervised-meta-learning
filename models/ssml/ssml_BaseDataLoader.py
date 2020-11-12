@@ -35,10 +35,7 @@ class SSMLBaseDataLoader(BaseDataLoader):
             If it is a dictionary then each item is the class name and the corresponding values are the file addresses
             of images of that class.
         """
-        ## DEBUG
-        print("\n\nSuccessfully in SSML\n\n")
-        ## DEBUG
-
+        
         if instance_parse_function is None:
             instance_parse_function = self.get_parse_function()
 
@@ -49,14 +46,12 @@ class SSMLBaseDataLoader(BaseDataLoader):
             def get_instances(class_dir_address):
                 class_dir_address = class_dir_address.numpy().decode('utf-8')
                 instance_names = folders[class_dir_address]
-                print(instance_names[0])
-                print(instance_names)
-
+                
                 if self.accessible_labels is None:
                     # make sure we only have a limited subset of data available
                     np.random.seed(seed)
-                    idxs = np.random.choice(len(instance_names), int(self.perc*len(instance_names)))
-                    instances = np.random.choice(instance_names[idxs], size=k + k_validation, replace=False)
+                    idxs = np.random.choice(np.arange(len(instance_names)), int(self.perc*len(instance_names)))                    
+                    instances = np.random.choice(np.array(instance_names)[idxs], size=k + k_validation, replace=False)
                 else:
                     print("TODO: IMPLEMENT USAGE OF ACCESSIBLE LABELS")
                     # TODO: Implement usage of accessible labels
@@ -116,6 +111,7 @@ class SSMLBaseDataLoader(BaseDataLoader):
         dataset = tf.data.Dataset.zip((dataset, labels_dataset))
 
         steps_per_epoch = tf.data.experimental.cardinality(dataset)
+        print("Steps per epoch:", steps_per_epoch)
         if steps_per_epoch == 0:
             dataset = dataset.repeat(-1).take(meta_batch_size).batch(meta_batch_size)
         else:
