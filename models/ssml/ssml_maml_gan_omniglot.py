@@ -27,8 +27,9 @@ if __name__ == '__main__':
     omniglot_generator = get_generator(latent_dim)
     omniglot_discriminator = get_discriminator()
     omniglot_parser = OmniglotParser(shape=shape)
-    labeled_percentage = 0.5
+    labeled_percentage = 0.
     L = None
+    experiment_name = 'omniglot_unsuperv_bench'
 
 
     gan = GAN(
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         log_train_images_after_iteration=200,
         num_tasks_val=100,
         clip_gradients=False,
-        experiment_name='omniglot_p1_0.5_shift_a',
+        experiment_name=experiment_name,
         val_seed=42,
         val_test_batch_norm_momentum=0.0
     )
