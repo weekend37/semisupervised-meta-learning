@@ -32,7 +32,7 @@ def get_generator(latent_dim):
     return generator
 
 
-def get_discriminator():
+def get_discriminator(num_classes=0):
     # since we are in the folder lasiummamlssgan, this has k+1 dense connections.
     discriminator = keras.Sequential(
         [
@@ -45,7 +45,7 @@ def get_discriminator():
             layers.LeakyReLU(alpha=0.2),
 
             layers.GlobalMaxPooling2D(),
-            layers.Dense(1),
+            layers.Dense(num_classes+1), # convention: last one is the fake/real indicator.
         ],
         name="discriminator",
     )
@@ -59,7 +59,12 @@ if __name__ == '__main__':
     shape = (28, 28, 1)
     latent_dim = 128
     omniglot_generator = get_generator(latent_dim)
-    omniglot_discriminator = get_discriminator()
+
+    # getting number of training_classes from the model.
+    # this is number of classes we use for semi-supervised gan to
+    # enrich latent space.
+    num_classes = len(omniglot_database.train_folders)
+    omniglot_discriminator = get_discriminator(num_classes=num_classes)
     omniglot_parser = OmniglotParser(shape=shape)
 
     gan = GAN(

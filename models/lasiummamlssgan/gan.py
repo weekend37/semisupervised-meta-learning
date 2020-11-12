@@ -75,11 +75,12 @@ class GAN(tf.keras.models.Model):
         self.d_loss_metric = tf.keras.metrics.Mean()
         self.g_loss_metric = tf.keras.metrics.Mean()
 
-    def compile(self, d_optimizer, g_optimizer, loss_fn):
+    def compile(self, d_optimizer, g_optimizer, loss_fn, ss_loss_fn=None):
         super(GAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
         self.loss_fn = loss_fn
+        self.ss_loss_fn = ss_loss_fn
 
     def get_gan_name(self):
         return self.gan_name
@@ -103,20 +104,19 @@ class GAN(tf.keras.models.Model):
         into 2 parts. One part will be used for supervision, other is normal.
         
         """
-        print("Instance: {}".format(type(real_images)))
-        print(real_images[0].shape, real_images[1].shape)
-        if isinstance(real_images, tuple):
-            real_images = real_images[0]
-
+        # if isinstance(real_images, tuple):
+        #     real_images = real_images[0]
+        
         ### our code goes here...
         
         # subsect real_images into 2. 
-
-
-
+        batch_size = tf.shape(real_images[0])[0] # total
+        ss_labels = real_images[1][0:batch_size//2]
+        ss_images = real_images[0][0:batch_size//2]
+        real_images = real_images[0][batch_size//2:]
         ###
 
-        batch_size = tf.shape(real_images)[0]
+        batch_size = tf.shape(real_images)[0] # this becomes original batch size / 2.
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
 
         generated_images = self.generator(random_latent_vectors)
@@ -127,8 +127,13 @@ class GAN(tf.keras.models.Model):
 
         labels += 0.05 * tf.random.uniform(tf.shape(labels))
         with tf.GradientTape() as tape:
-            predictions = self.discriminator(combined_images)
+            predictions = self.discriminator(combined_images)[:,-1]
             d_loss = self.loss_fn(labels, predictions)
+
+            # add the supervised loss
+            ss_predictions = self.discriminator(ss_images)[:,0:-1]
+            d_loss += self.ss_loss_fn(ss_labels,ss_predictions)
+
         grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.d_optimizer.apply_gradients(
             zip(grads, self.discriminator.trainable_weights)
@@ -141,8 +146,8 @@ class GAN(tf.keras.models.Model):
         with tf.GradientTape() as tape:
             generated_images1 = self.generator(random_latent_vectors)
             generated_images2 = self.generator(random_latent_vectors2)
-            predictions1 = self.discriminator(generated_images1)
-            predictions2 = self.discriminator(generated_images2)
+            predictions1 = self.discriminator(generated_images1)[:,-1]
+            predictions2 = self.discriminator(generated_images2)[:,-1]
 
             g_loss = self.loss_fn(misleading_labels, predictions1 + predictions2) + self.gan_regularization_loss(
                 random_latent_vectors1, random_latent_vectors2, generated_images1, generated_images2
@@ -184,6 +189,7 @@ class GAN(tf.keras.models.Model):
                 label = instance_to_class[fp]
                 label = class_ids[label]
                 label = tf.one_hot(label, depth=num_classes)
+                # I printed shape here and it said 1200 by default.
                 return label
 
             label = tf.py_function(extract_label_from_file_path, inp=[file_path], Tout=tf.float32)
@@ -251,10 +257,14 @@ class GAN(tf.keras.models.Model):
 
         callbacks = [tensorboard_callback, checkpoint_callback]
 
+        ss_loss_fn = lambda labels,logits: \
+            tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels,logits))
+
         self.compile(
             d_optimizer=tf.keras.optimizers.Adam(self.d_learning_rate),
             g_optimizer=tf.keras.optimizers.Adam(self.g_learning_rate),
             loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+            ss_loss_fn=ss_loss_fn,
         )
         self.fit(
             train_dataset,
