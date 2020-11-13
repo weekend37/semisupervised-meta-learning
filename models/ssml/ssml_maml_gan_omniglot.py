@@ -21,16 +21,34 @@ from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
 
 
 if __name__ == '__main__':
+
+    if len(sys.argv) == 1:
+        print("Usage:")
+        print("   $ python3 ssml_maml_gan_omniglot.py <labeled_percentage>")
+        print("where <labeled_percentage> is a number in [0,1] (preferable having 0 or 5 in 2nd decimal place like 0, 0.05, 0.10, etc..)")
+        sys.exit(9)
+    elif len(sys.argv) == 2:
+        labeled_percentage = float(sys.argv[1])
+    elif len(sys.argv) > 2:
+        print("Error: Too many arguments")
+        sys.exit(0)
+
+    # CONFIGS
+    ITERATIONS = 5000
+    GAN_EPOCHS = 500
+    N_TASK_EVAL = 1000
+    K = 1
+
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
     latent_dim = 128
     omniglot_generator = get_generator(latent_dim)
     omniglot_discriminator = get_discriminator()
     omniglot_parser = OmniglotParser(shape=shape)
-    labeled_percentage = 0.
-    L = None
-    experiment_name = 'omniglot_unsuperv_bench'
 
+    experiment_name = 'ssml_omniglot_perc'+str(labeled_percentage)
+
+    L = None
 
     gan = GAN(
         'omniglot',
@@ -44,10 +62,10 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=1, checkpoint_freq=50)
+    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
     gan.load_latest_checkpoint()
 
-    print("training GAN is done")
+    print("GAN training finished")
     time.sleep(1)
 
     ssml_maml = SSMLMAML(
@@ -58,12 +76,12 @@ if __name__ == '__main__':
         database=omniglot_database,
         network_cls=SimpleModel,
         n=5,
-        k_ml=1,
-        k_val_ml=5,
-        k_val=1,
-        k_val_val=15,
-        k_test=1,
-        k_val_test=15,
+        k_ml=K,
+        k_val_ml=K,
+        k_val=K,
+        k_val_val=K,
+        k_test=K,
+        k_val_test=K,
         meta_batch_size=4,
         num_steps_ml=5,
         lr_inner_ml=0.4,
@@ -79,7 +97,6 @@ if __name__ == '__main__':
         val_test_batch_norm_momentum=0.0
     )
 
-    iterations=1000
     ssml_maml_gan = SSMLMAMLGAN(
 
         perc=labeled_percentage,
@@ -92,12 +109,12 @@ if __name__ == '__main__':
         database=omniglot_database,
         network_cls=SimpleModel,
         n=5,
-        k_ml=1,
-        k_val_ml=1,
-        k_val=1,
-        k_val_val=1,
-        k_val_test=1,
-        k_test=1,
+        k_ml=K,
+        k_val_ml=K,
+        k_val=K,
+        k_val_val=K,
+        k_val_test=K,
+        k_test=K,
         meta_batch_size=4,
         num_steps_ml=5,
         lr_inner_ml=0.4,
@@ -113,5 +130,5 @@ if __name__ == '__main__':
         val_test_batch_norm_momentum=0.0
     )
 
-    ssml_maml_gan.train(iterations=1000)
-    ssml_maml_gan.evaluate(50, 100, seed=42)
+    ssml_maml_gan.train(iterations=ITERATIONS)
+    ssml_maml_gan.evaluate(50, N_TASK_EVAL, seed=94305)

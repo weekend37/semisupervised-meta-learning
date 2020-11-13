@@ -62,7 +62,7 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_train_dataset = self.ssml_maml.get_train_dataset()
         maml_gan_train_dataset = self.get_train_dataset()
 
-        iteration_count = self.load_model()
+        iteration_count = 0 # self.load_model()
         # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
 
         # N_labeled = len(maml_train_dataset)
