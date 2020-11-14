@@ -70,7 +70,7 @@ class SSMLMAMLGAN(MAMLGAN):
         # N_gen = int(N - N_labeled) # 6-3
 
         N = 20
-        N_labeled = int(self.perc * N)
+        N_labeled = 20  # int(self.perc * N)
         N_gen = int(N - N_labeled)
         
         print(" #### ### ## # N_labeled:", N_labeled)

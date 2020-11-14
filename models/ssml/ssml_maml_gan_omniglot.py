@@ -3,6 +3,7 @@ import tensorflow_hub as hub
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import numpy as np
 import time
 import sys
 from path import mypath
@@ -68,6 +69,15 @@ if __name__ == '__main__':
     print("GAN training finished")
     time.sleep(1)
 
+    train_folders = omniglot_database.train_folders
+    print("before:", len(list(train_folders.keys())))
+    keys = list(train_folders.keys())
+    keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
+    train_folders = {k: v for (k, v) in train_folders.items() if k in keys}
+    print("after:", len(list(train_folders.keys())))
+    omniglot_database.train_folders = train_folders
+    labeled_percentage = 1.0
+    
     ssml_maml = SSMLMAML(
 
         perc=labeled_percentage,

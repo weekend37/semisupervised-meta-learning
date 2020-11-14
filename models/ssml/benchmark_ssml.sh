@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -p results
-for perc in $(seq 0.0 0.1 1.0);
+for perc in 0.01 0.05 0.1 0.5
 do
 	echo Running 
       	echo "  " $ python3 ssml_maml_gan_omniglot.py  $perc
