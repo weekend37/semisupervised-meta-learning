@@ -5,7 +5,8 @@ import numpy as np
 
 import settings
 
-
+np.random.seed(94305)
+tf.random.set_seed(94305)
 class CheckPointFreq(tf.keras.callbacks.ModelCheckpoint):
     def __init__(self, epochs, freq=1, *args, **kwargs):
         super(CheckPointFreq, self).__init__(*args, **kwargs)
@@ -97,7 +98,7 @@ class GAN(tf.keras.models.Model):
         lz = 1 / (lz + eps)
         return lz
 
-    def train_step(self, real_images):
+    def train_step(self, dataset):
 
         """
         strategy: since we get real_images as a tuple, here is where we split 
@@ -107,13 +108,26 @@ class GAN(tf.keras.models.Model):
         # if isinstance(real_images, tuple):
         #     real_images = real_images[0]
         
-        ### our code goes here...
-        
         # subsect real_images into 2. 
-        batch_size = tf.shape(real_images[0])[0] # total
-        ss_labels = real_images[1][0:batch_size//2]
-        ss_images = real_images[0][0:batch_size//2]
-        real_images = real_images[0][batch_size//2:]
+        batch_size = tf.shape(dataset[0])[0] # total
+        ## more ad-hoc way of training on 50% sup and 50% unsup.
+        # this is fine since we use dataset.shuffle(reshuffle_each_iteration=False)
+        ss_labels = dataset[1][0:batch_size//2]
+        ss_images = dataset[0][0:batch_size//2]
+        real_images = dataset[0]
+
+        ### our code goes here...
+        ## NOTE: Latest update:
+        ## this is not needed since dataset shuffling is not done each iteration.
+        # this indicates 0 goes to supervised, 1 goes to unsupervised.
+        # indicator = dataset[2]
+        # where_0 = tf.where(indicator==0)
+        # where_1 = tf.where(indicator==1)
+        # TODO: Some bug that creates nan loss. 
+        # print(real_images.shape, ss_images.shape, ss_labels.shape)
+        # ss_labels = tf.gather_nd(dataset[1],where_0)
+        # ss_images = tf.gather_nd(dataset[0],where_0)
+        # real_images = tf.gather_nd(dataset[0],where_1)
         ###
 
         batch_size = tf.shape(real_images)[0] # this becomes original batch size / 2.
@@ -168,12 +182,15 @@ class GAN(tf.keras.models.Model):
 
     def get_dataset(self, partition='train'):
         instances, instance_to_class, class_ids = self.database.get_all_instances(partition_name='train', with_classes=True)
+
+        # get dataset from the above files
         dataset = tf.data.Dataset.from_tensor_slices(instances)
         dataset = dataset.map(self.get_db_process_path(self.database, instance_to_class, class_ids))
         dataset = dataset.cache()
-        dataset = dataset.shuffle(buffer_size=len(instances))
-
-        dataset = dataset.batch(64)
+        # shuffle just once in the beginning now.
+        dataset = dataset.shuffle(buffer_size=len(instances),reshuffle_each_iteration=False)
+        # chunk it. drop_remainder will be useful when testing different % of sup,unsup
+        dataset = dataset.batch(32,drop_remainder=True)
 
         return dataset
 
@@ -194,7 +211,10 @@ class GAN(tf.keras.models.Model):
 
             label = tf.py_function(extract_label_from_file_path, inp=[file_path], Tout=tf.float32)
             image = self.parser.get_parse_fn()(file_path)
-            return image, label
+            return image, label #, np.random.choice(2,1,p=[0.5,0.5])[0]
+            # the last np.random.choice acts as split for sup, unsup split.
+            # TODO: NOTE; change the argument p to adjust split.
+            # 0.7,0.3 means more sup data.
 
         return process_path
 
