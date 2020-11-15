@@ -30,7 +30,11 @@ if __name__ == '__main__':
         sys.exit(9)
     elif len(sys.argv) == 2:
         labeled_percentage = float(sys.argv[1])
-    elif len(sys.argv) > 2:
+        prefix = 'ssml_omniglot_perc'
+    elif len(sys.argv) == 3:
+        labeled_percentage = float(sys.argv[1])
+        prefix = sys.argv[2]
+    else:
         print("Error: Too many arguments")
         sys.exit(0)
 
@@ -47,7 +51,7 @@ if __name__ == '__main__':
     omniglot_discriminator = get_discriminator()
     omniglot_parser = OmniglotParser(shape=shape)
 
-    experiment_name = 'ssml_omniglot_perc'+str(labeled_percentage)
+    experiment_name = prefix+str(labeled_percentage)
 
     L = None
 
