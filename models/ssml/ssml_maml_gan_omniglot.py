@@ -53,8 +53,6 @@ if __name__ == '__main__':
 
     experiment_name = prefix+str(labeled_percentage)
 
-    L = None
-
     gan = GAN(
         'omniglot',
         image_shape=shape,
@@ -72,16 +70,16 @@ if __name__ == '__main__':
 
     print("GAN training finished")
     time.sleep(1)
-
-    train_folders = omniglot_database.train_folders
-    print("before:", len(list(train_folders.keys())))
-    keys = list(train_folders.keys())
-    keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
-    train_folders = {k: v for (k, v) in train_folders.items() if k in keys}
-    print("after:", len(list(train_folders.keys())))
-    omniglot_database.train_folders = train_folders
-    labeled_percentage = 1.0
     
+    # Split labeled and not labeled
+    train_folders = omniglot_database.train_folders
+    keys = list(train_folders.keys())
+    labeled_keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
+    train_folders_labeled = {k: v for (k, v) in train_folders.items() if k in labeled_keys}
+    # train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
+    omniglot_database.train_folders = train_folders_labeled
+
+    L = None
     ssml_maml = SSMLMAML(
 
         perc=labeled_percentage,

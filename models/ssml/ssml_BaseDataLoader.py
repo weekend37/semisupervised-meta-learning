@@ -49,9 +49,14 @@ class SSMLBaseDataLoader(BaseDataLoader):
                 
                 if self.accessible_labels is None:
                     # make sure we only have a limited subset of data available
-                    np.random.seed(seed)
-                    idxs = np.random.choice(np.arange(len(instance_names)), int(self.perc*len(instance_names)))                    
-                    instances = np.random.choice(np.array(instance_names)[idxs], size=k + k_validation, replace=False)
+
+                    # # Old accessible labels scheme (X% instances of 100% of the classes)
+                    # np.random.seed(seed)
+                    # idxs = np.random.choice(np.arange(len(instance_names)), int(self.perc*len(instance_names)))                    
+                    # instances = np.random.choice(np.array(instance_names)[idxs], size=k + k_validation, replace=False)
+
+                    # New accissible labels scheme (100% instances of X% of the classes)
+                    instances = np.random.choice(np.array(instance_names), size=k + k_validation, replace=False)
                 else:
                     print("TODO: IMPLEMENT USAGE OF ACCESSIBLE LABELS")
                     # TODO: Implement usage of accessible labels
