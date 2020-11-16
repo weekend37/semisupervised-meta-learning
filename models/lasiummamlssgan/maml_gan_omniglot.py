@@ -79,6 +79,7 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
+    gan.labels = "Hello"
     gan.perform_training(epochs=500, checkpoint_freq=50)
     gan.load_latest_checkpoint()
 

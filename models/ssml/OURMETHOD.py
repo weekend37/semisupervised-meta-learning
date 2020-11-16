@@ -12,12 +12,15 @@ sys.path.append(mypath)
 from databases import OmniglotDatabase
 from models.lasiummamlgan.database_parsers import OmniglotParser
 
-from models.lasiummamlgan.gan import GAN
+# from models.lasiummamlgan.gan import GAN
+from models.lasiummamlssgan.gan import GAN as SSGAN
+
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
 from networks.maml_umtra_networks import SimpleModel, MiniImagenetModel, VGG19Model, FiveLayerResNet
 
-from models.lasiummamlgan.maml_gan_omniglot import get_generator, get_discriminator
+# from models.lasiummamlgan.maml_gan_omniglot import get_generator, get_discriminator
+from models.lasiummamlssgan.maml_gan_omniglot import get_generator, get_discriminator
 from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
 
 
@@ -30,7 +33,7 @@ if __name__ == '__main__':
         sys.exit(9)
     elif len(sys.argv) == 2:
         labeled_percentage = float(sys.argv[1])
-        prefix = 'ssml_omniglot_perc'
+        prefix = 'ssml_omniglot_OURMETHOD_perc'
     elif len(sys.argv) == 3:
         labeled_percentage = float(sys.argv[1])
         prefix = sys.argv[2]
@@ -41,20 +44,35 @@ if __name__ == '__main__':
     # CONFIGS
     ITERATIONS = 5000
     GAN_EPOCHS = 500
-    N_TASK_EVAL = 1000
+    GAN_CHECKPOINTS = 50
+    N_TASK_EVAL = 1000 
     K = 1
+    TRAIN_GAN = True
 
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
     latent_dim = 128
     omniglot_generator = get_generator(latent_dim)
-    omniglot_discriminator = get_discriminator()
     omniglot_parser = OmniglotParser(shape=shape)
 
     experiment_name = prefix+str(labeled_percentage)
 
-    gan = GAN(
-        'omniglot',
+    # Split labeled and not labeled
+    train_folders = omniglot_database.train_folders
+    keys = list(train_folders.keys())
+    labeled_keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
+    train_folders_labeled = {k: v for (k, v) in train_folders.items() if k in labeled_keys}
+    train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
+
+    print("Number of unlabeled classes:", len(train_folders_unlabeled.keys()))
+    print("Number of labeled classes:" , len(train_folders_labeled.keys()))
+
+    # Start with unlabeled
+    omniglot_database.train_folders = train_folders_unlabeled
+    omniglot_discriminator = get_discriminator(len(train_folders_labeled))
+    ssgan = SSGAN(
+        gan_name='ssgan_omniglot_'+str(labeled_percentage),
+        SS=False,
         image_shape=shape,
         latent_dim=latent_dim,
         database=omniglot_database,
@@ -65,21 +83,28 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
-    gan.load_latest_checkpoint()
 
-    print("GAN training finished")
-    time.sleep(1)
+    if not TRAIN_GAN:
+        ssgan.load_latest_checkpoint()
+    else:
+        ssgan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
+        ssgan.load_latest_checkpoint()
+        print("SSGAN unlabeled training finished")
+
+        # Train labeled
+        ssgan.database.train_folders = train_folders_labeled
+        ssgan.SS = True
+        ssgan.perform_training(epochs=GAN_EPOCHS*2, checkpoint_freq=50)
+        ssgan.load_latest_checkpoint()
+        print("SSGAN labeled training finished")
+
+
+    # This should only be used if slicing across folders (and not instances) has to implemented first then
+    L = None 
     
-    # Split labeled and not labeled
-    train_folders = omniglot_database.train_folders
-    keys = list(train_folders.keys())
-    labeled_keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
-    train_folders_labeled = {k: v for (k, v) in train_folders.items() if k in labeled_keys}
-    # train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
+    # from here on everyone only see's the labeled images
     omniglot_database.train_folders = train_folders_labeled
 
-    L = None
     ssml_maml = SSMLMAML(
 
         perc=labeled_percentage,
@@ -115,7 +140,7 @@ if __name__ == '__main__':
         accessible_labels=L,
         ssml_maml=ssml_maml,
 
-        gan=gan,
+        gan=ssgan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
         database=omniglot_database,

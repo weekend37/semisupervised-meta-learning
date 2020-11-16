@@ -46,6 +46,7 @@ class GAN(tf.keras.models.Model):
     def __init__(
             self,
             gan_name,
+            SS,
             image_shape,
             latent_dim,
             database,
@@ -72,6 +73,8 @@ class GAN(tf.keras.models.Model):
         self.g_learning_rate = g_learning_rate
 
         self.loss_fn = None
+
+        self.SS = SS
 
         self.d_loss_metric = tf.keras.metrics.Mean()
         self.g_loss_metric = tf.keras.metrics.Mean()
@@ -112,8 +115,10 @@ class GAN(tf.keras.models.Model):
         batch_size = tf.shape(dataset[0])[0] # total
         ## more ad-hoc way of training on 50% sup and 50% unsup.
         # this is fine since we use dataset.shuffle(reshuffle_each_iteration=False)
-        ss_labels = dataset[1][0:batch_size//2]
-        ss_images = dataset[0][0:batch_size//2]
+
+        # ss_labels = dataset[1][0:batch_size//2]
+        # ss_images = dataset[0][0:batch_size//2]
+        
         real_images = dataset[0]
 
         ### our code goes here...
@@ -145,8 +150,10 @@ class GAN(tf.keras.models.Model):
             d_loss = self.loss_fn(labels, predictions)
 
             # add the supervised loss
-            ss_predictions = self.discriminator(ss_images)[:,0:-1]
-            d_loss += self.ss_loss_fn(ss_labels,ss_predictions)
+            if self.SS:    
+                ss_labels = dataset[1]
+                ss_predictions = self.discriminator(real_images)[:,0:-1]
+                d_loss += self.ss_loss_fn(ss_labels,ss_predictions)
 
         grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.d_optimizer.apply_gradients(
@@ -181,14 +188,16 @@ class GAN(tf.keras.models.Model):
     #     return train_dataset
 
     def get_dataset(self, partition='train'):
+
         instances, instance_to_class, class_ids = self.database.get_all_instances(partition_name='train', with_classes=True)
+        # print("GAN THINKS IT'S THIS MANY CLASSES:", len(class_ids))
 
         # get dataset from the above files
         dataset = tf.data.Dataset.from_tensor_slices(instances)
         dataset = dataset.map(self.get_db_process_path(self.database, instance_to_class, class_ids))
         dataset = dataset.cache()
         # shuffle just once in the beginning now.
-        dataset = dataset.shuffle(buffer_size=len(instances),reshuffle_each_iteration=False)
+        dataset = dataset.shuffle(buffer_size=len(instances)) #,reshuffle_each_iteration=False)
         # chunk it. drop_remainder will be useful when testing different % of sup,unsup
         dataset = dataset.batch(32,drop_remainder=True)
 
@@ -234,14 +243,24 @@ class GAN(tf.keras.models.Model):
         if latest_checkpoint is not None:
             self.load_weights(latest_checkpoint)
             epoch = int(latest_checkpoint[latest_checkpoint.rfind('_') + 1:])
+            print(f"Loaded a GAN trained for {epoch} epochs")
             return epoch
+        else:
+            print(f"No GAN found with name {self.get_gan_name()} .")
 
         return -1
 
-    def perform_training(self, epochs, checkpoint_freq=100, vis_callback_cls=None):
-        initial_epoch = self.load_latest_checkpoint()
-        if initial_epoch != -1:
-            print(f'Continue training from epoch {initial_epoch}.')
+    def perform_training(self, epochs, checkpoint_freq=100, vis_callback_cls=None, load_ckpt=True):
+
+        if load_ckpt:
+            initial_epoch = self.load_latest_checkpoint()
+
+            if initial_epoch != -1:
+                print(f'Continue training from epoch {initial_epoch}.')
+        
+        else:
+            initial_epoch = -1
+            print("Training GAN from scratch (set load_ckpt=False to change this)")
 
         train_dataset = self.get_train_dataset()
 
