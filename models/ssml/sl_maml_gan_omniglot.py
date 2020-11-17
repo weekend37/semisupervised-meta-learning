@@ -43,6 +43,8 @@ if __name__ == '__main__':
     GAN_EPOCHS = 500
     N_TASK_EVAL = 1000
     K = 1
+    N_WAY = 5
+    META_BATCH_SIZE = 1
 
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
@@ -76,7 +78,8 @@ if __name__ == '__main__':
     train_folders = omniglot_database.train_folders
     print("before:", len(list(train_folders.keys())))
     keys = list(train_folders.keys())
-    keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
+    sample_size = np.max([N_WAY*META_BATCH_SIZE, int(len(train_folders.keys())*labeled_percentage)])
+    keys = np.random.choice(keys, sample_size, replace=False)
     train_folders = {k: v for (k, v) in train_folders.items() if k in keys}
     print("after:", len(list(train_folders.keys())))
     omniglot_database.train_folders = train_folders
@@ -88,14 +91,14 @@ if __name__ == '__main__':
 
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,
         k_val_val=K,
         k_test=K,
         k_val_test=K,
-        meta_batch_size=4,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.4,
         num_steps_validation=5,
@@ -121,14 +124,14 @@ if __name__ == '__main__':
         generated_image_shape=shape,
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,
         k_val_val=K,
         k_val_test=K,
         k_test=K,
-        meta_batch_size=4,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.4,
         num_steps_validation=5,
