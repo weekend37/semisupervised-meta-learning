@@ -48,6 +48,7 @@ if __name__ == '__main__':
     N_TASK_EVAL = 1000 
     K = 1
     TRAIN_GAN = True
+    GAN_N_ALT = 1 # How many times to alternate between unlabeled and labeled
 
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
@@ -87,17 +88,28 @@ if __name__ == '__main__':
     if not TRAIN_GAN:
         ssgan.load_latest_checkpoint()
     else:
-        ssgan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
-        ssgan.load_latest_checkpoint()
-        print("SSGAN unlabeled training finished")
 
-        # Train labeled
-        ssgan.database.train_folders = train_folders_labeled
-        ssgan.SS = True
-        ssgan.perform_training(epochs=GAN_EPOCHS*2, checkpoint_freq=50)
-        ssgan.load_latest_checkpoint()
-        print("SSGAN labeled training finished")
+        gan_epochs = np.round(np.arange(GAN_EPOCHS/GAN_N_ALT,GAN_EPOCHS*2+1, GAN_EPOCHS/GAN_N_ALT)).astype(int)
+        gan_epochs = gan_epochs.reshape(GAN_N_ALT,2)
 
+        for alt_epochs in gan_epochs:
+
+            unlab_ep, lab_ep = alt_epochs
+
+            # Train unlabeled
+            ssgan.database.train_folders = train_folders_unlabeled
+            ssgan.SS = False
+            ssgan.perform_training(epochs=unlab_ep, checkpoint_freq=50)
+            ssgan.load_latest_checkpoint()
+
+            # Train labeled
+            ssgan.database.train_folders = train_folders_labeled
+            ssgan.SS = True
+            ssgan.perform_training(epochs=lab_ep, checkpoint_freq=50)
+            ssgan.load_latest_checkpoint()
+
+
+    print("SSGAN training finished") 
 
     # This should only be used if slicing across folders (and not instances) has to implemented first then
     L = None 
