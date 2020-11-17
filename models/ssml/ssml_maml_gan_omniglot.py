@@ -30,7 +30,7 @@ if __name__ == '__main__':
         sys.exit(9)
     elif len(sys.argv) == 2:
         labeled_percentage = float(sys.argv[1])
-        prefix = 'ssml_omniglot_perc'
+        prefix = 'ssml_new_scheme_omniglot_perc'
     elif len(sys.argv) == 3:
         labeled_percentage = float(sys.argv[1])
         prefix = sys.argv[2]
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     experiment_name = prefix+str(labeled_percentage)
 
     gan = GAN(
-        'omniglot',
+        gan_name='omniglot',
         image_shape=shape,
         latent_dim=latent_dim,
         database=omniglot_database,

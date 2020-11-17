@@ -47,7 +47,6 @@ class SSMLMAML(ModelAgnosticMetaLearningModel):
             val_seed=self.val_seed
         )
 
-
 class SSMLMAMLGAN(MAMLGAN):
     def __init__(self, perc, accessible_labels, ssml_maml, *args, **kwargs):
         super(SSMLMAMLGAN, self).__init__(*args, **kwargs)
@@ -62,15 +61,11 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_train_dataset = self.ssml_maml.get_train_dataset()
         maml_gan_train_dataset = self.get_train_dataset()
 
-        iteration_count = 0 # self.load_model()
-        # N_labeled = tf.data.experimental.cardinality(maml_train_dataset)
+        print("Not Loading any SLMAMLGAN model")
+        iteration_count = -1 # self.load_model()
 
-        # N_labeled = len(maml_train_dataset)
-        # N = N_labeled // self.perc # effective dataset length 3/0.5 = 6
-        # N_gen = int(N - N_labeled) # 6-3
-
-        N = 20
-        N_labeled = 20 # int(self.perc * N)
+        N = 20 # 100
+        N_labeled = 20 # 100 # int(self.perc * N)
         N_gen = int(N - N_labeled)
         
         print(" #### ### ## # N_labeled:", N_labeled)

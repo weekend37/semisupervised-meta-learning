@@ -62,10 +62,11 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_train_dataset = self.ssml_maml.get_train_dataset()
         maml_gan_train_dataset = self.get_train_dataset()
 
-        iteration_count = self.load_model()
+        print("Not Loading any SSMLMAMLGAN model")
+        iteration_count = -1 # self.load_model()
 
         N = 20
-        N_labeled = int(self.perc * N)
+        N_labeled = int(np.ceil(self.perc * N))
         N_gen = int(N - N_labeled)
         
         print(" #### ### ## # N_labeled:", N_labeled)
@@ -134,8 +135,6 @@ class SSMLMAMLGAN(MAMLGAN):
                         pbar.update(1)
 
                         iteration_count_inner += 1
-                        # which_data = ['gen_data','label_data'][d]
-                        # print(f"\n\nThis is the {iteration_count_inner}th iteration in {which_data}\n")
                         if iteration_count_inner >= N_dataset:
                             should_continue_inner = False
                             break

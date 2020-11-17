@@ -172,7 +172,10 @@ class GAN(tf.keras.models.Model):
 
             g_loss = self.loss_fn(misleading_labels, predictions1 + predictions2) + self.gan_regularization_loss(
                 random_latent_vectors1, random_latent_vectors2, generated_images1, generated_images2
-            )
+            ) 
+            # Helgi: I would want to add something like: 
+            # g_loss -= max(self.discriminator.PROBABILITES_FOR_EACH_CLASS)
+            # e.g. reward if D is certain of a certain class
 
         grads = tape.gradient(g_loss, self.generator.trainable_weights)
         self.g_optimizer.apply_gradients(zip(grads, self.generator.trainable_weights))
