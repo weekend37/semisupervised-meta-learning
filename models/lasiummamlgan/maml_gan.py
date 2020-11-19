@@ -100,15 +100,18 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
         return vectors
 
     def generate_all_vectors(self):
-        if self.lasium_type = "p1":
+        if self.lasium_type == "p1":
+            # print("USING LASIUM-N")
             return self.generate_all_vectors_p1()
-        elif self.lasium_type = "p2":
+        elif self.lasium_type == "p2":
+            # print("NOT USING LASIUM-N, probably LASIUM-RO")
             return self.generate_all_vectors_p2()
-        elif self.lasium_type = "p3":
+        elif self.lasium_type == "p3":
             return self.generate_all_vectors_p3()
         else:
-            print("Could not find LAISUM type.")
-            sys.exit()
+            print("Could not find LASIUM type. Choosing LASIUM-N...")
+            return self.generate_all_vectors_p1()
+
 
     @tf.function
     def get_images_from_vectors(self, vectors):
