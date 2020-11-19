@@ -48,7 +48,8 @@ if __name__ == '__main__':
     N_TASK_EVAL = 1000 
     K = 1
     TRAIN_GAN = True
-    GAN_N_ALT = 1 # How many times to alternate between unlabeled and labeled
+    LASIUM_TYPE = "p1"
+    GAN_N_ALT = 50 # How many times to alternate between unlabeled and labeled
 
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
@@ -57,6 +58,8 @@ if __name__ == '__main__':
     omniglot_parser = OmniglotParser(shape=shape)
 
     experiment_name = prefix+str(labeled_percentage)
+    if GAN_N_ALT > 1:
+        experiment_name += "_alt"+str(GAN_N_ALT)
 
     # Split labeled and not labeled
     train_folders = omniglot_database.train_folders
@@ -85,9 +88,9 @@ if __name__ == '__main__':
         g_learning_rate=0.0003,
     )
 
-    if not TRAIN_GAN:
-        ssgan.load_latest_checkpoint()
-    else:
+    stored_epochs = ssgan.load_latest_checkpoint()
+    
+    if TRAIN_GAN and stored_epochs < GAN_EPOCHS*2:
 
         gan_epochs = np.round(np.arange(GAN_EPOCHS/GAN_N_ALT,GAN_EPOCHS*2+1, GAN_EPOCHS/GAN_N_ALT)).astype(int)
         gan_epochs = gan_epochs.reshape(GAN_N_ALT,2)
@@ -124,7 +127,7 @@ if __name__ == '__main__':
 
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,
@@ -151,13 +154,15 @@ if __name__ == '__main__':
         perc=labeled_percentage,
         accessible_labels=L,
         ssml_maml=ssml_maml,
+        
+        lasium_type=LASIUM_TYPE,
 
         gan=ssgan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,

@@ -99,7 +99,15 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
         return vectors
 
     def generate_all_vectors(self):
-        return self.generate_all_vectors_p1()
+        if self.lasium_type = "p1":
+            return self.generate_all_vectors_p1()
+        elif self.lasium_type = "p2":
+            return self.generate_all_vectors_p2()
+        elif self.lasium_type = "p3":
+            return self.generate_all_vectors_p3()
+        else:
+            print("Could not find LAISUM type.")
+            sys.exit()
 
     @tf.function
     def get_images_from_vectors(self, vectors):

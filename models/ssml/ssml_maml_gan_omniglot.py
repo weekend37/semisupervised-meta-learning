@@ -20,7 +20,6 @@ from networks.maml_umtra_networks import SimpleModel, MiniImagenetModel, VGG19Mo
 from models.lasiummamlgan.maml_gan_omniglot import get_generator, get_discriminator
 from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
 
-
 if __name__ == '__main__':
 
     if len(sys.argv) == 1:
@@ -39,10 +38,16 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # CONFIGS
-    ITERATIONS = 5000
+    ITERATIONS = 1000
     GAN_EPOCHS = 500
-    N_TASK_EVAL = 1000
-    K = 1
+    N_TASK_EVAL = 100
+    K = 5
+    N_WAY = 12
+    META_BATCH_SIZE = 1
+    LASIUM_TYPE = "p2"
+
+    print("K=",K)
+    print("N_WAY=",N_WAY)
 
     omniglot_database = OmniglotDatabase(random_seed=47, num_train_classes=1200, num_val_classes=100)
     shape = (28, 28, 1)
@@ -76,7 +81,7 @@ if __name__ == '__main__':
     keys = list(train_folders.keys())
     labeled_keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
     train_folders_labeled = {k: v for (k, v) in train_folders.items() if k in labeled_keys}
-    # train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
+    train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
     omniglot_database.train_folders = train_folders_labeled
 
     L = None
@@ -87,21 +92,21 @@ if __name__ == '__main__':
 
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,
         k_val_val=K,
         k_test=K,
         k_val_test=K,
-        meta_batch_size=4,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.4,
         num_steps_validation=5,
         save_after_iterations=1000,
         meta_learning_rate=0.001,
         report_validation_frequency=50,
-        log_train_images_after_iteration=200,
+        log_train_images_after_iteration=1001,
         num_tasks_val=100,
         clip_gradients=False,
         experiment_name='omniglot',
@@ -118,22 +123,25 @@ if __name__ == '__main__':
         gan=gan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
+
+        lasium_type = LASIUM_TYPE,
+
         database=omniglot_database,
         network_cls=SimpleModel,
-        n=5,
+        n=N_WAY,
         k_ml=K,
         k_val_ml=K,
         k_val=K,
         k_val_val=K,
         k_val_test=K,
         k_test=K,
-        meta_batch_size=4,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.4,
         num_steps_validation=5,
         save_after_iterations=1000,
         meta_learning_rate=0.001,
-        report_validation_frequency=200,
+        report_validation_frequency=1001,
         log_train_images_after_iteration=200,
         num_tasks_val=100,
         clip_gradients=False,

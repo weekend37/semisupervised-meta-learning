@@ -3,6 +3,7 @@ import tensorflow_hub as hub
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import numpy as np
 import time
 import sys
 from path import mypath
@@ -10,6 +11,7 @@ sys.path.append(mypath)
 
 from databases import MiniImagenetDatabase
 from models.lasiummamlgan.database_parsers import MiniImagenetParser
+
 from models.lasiummamlgan.gan import GAN
 from models.lasiummamlgan.maml_gan import MAMLGAN
 from models.maml.maml import ModelAgnosticMetaLearningModel
@@ -19,22 +21,42 @@ from models.lasiummamlgan.maml_gan_mini_imagenet import get_generator, get_discr
 from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
 
 if __name__ == '__main__':
+    
+    if len(sys.argv) == 1:
+        print("Usage:")
+        print("   $ python3 ssml_maml_gan_mini_imagenet.py <labeled_percentage>")
+        print("where <labeled_percentage> is a number in [0,1] (preferable having 0 or 5 in 2nd decimal place like 0, 0.05, 0.10, etc..)")
+        sys.exit(9)
+    elif len(sys.argv) == 2:
+        labeled_percentage = float(sys.argv[1])
+        prefix = 'ssml_new_scheme_mini_imagenet_perc'
+    elif len(sys.argv) == 3:
+        labeled_percentage = float(sys.argv[1])
+        prefix = sys.argv[2]
+    else:
+        print("Error: Too many arguments")
+        sys.exit(0)
+
+    # CONFIGS
+    ITERATIONS = 100 # 5000
+    GAN_EPOCHS = 100
+    N_TASK_EVAL = 100
+    K = 5
+    N_WAY = 5
+    META_BATCH_SIZE = 1
+    LASIUM_TYPE = "p1"
+
+    print("K=",K)
+    print("N_WAY=",N_WAY)
+
     mini_imagenet_database = MiniImagenetDatabase()
     shape = (84, 84, 3)
     latent_dim = 512
     mini_imagenet_generator = get_generator(latent_dim)
     mini_imagenet_discriminator = get_discriminator()
     mini_imagenet_parser = MiniImagenetParser(shape=shape)
-    labeled_percentage = 0.5
 
-    # Here we want to choose what labels we have access to through out this wohle process. 
-    # if L is the dictionary containing this information then maybe something like:
-    # (see get_supervised_meta_learning_dataset() in ssml_maml_gan for filesystem navigation and label handling)
-    # L = {}
-    # for f in folders:
-    #   all_images = os.GET_ALL_IMAGES_IN_THAT_FOLDER # not sure what the syntax is
-    #   L[f] = np.random.choose(all_images)
-    L = None
+    experiment_name = prefix+str(labeled_percentage)
 
     # for the SSGAN we need to feed the labels, L, when initializing
     gan = GAN(
@@ -49,15 +71,24 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-
-    GAN_EPOCHS = 1
-    print("Training GAN for", GAN_EPOCHS,"epochs")
-    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=min(5,GAN_EPOCHS))
+    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
     gan.load_latest_checkpoint()
 
     print("training GAN is done")
     time.sleep(1)
 
+    # Split labeled and not labeled
+    train_folders = mini_imagenet_database.train_folders
+    # print(train_folders)
+    keys = list(train_folders.keys())
+    # print(len(keys))
+    labeled_keys = np.random.choice(keys, int(len(train_folders.keys())*labeled_percentage), replace=False)
+    train_folders_labeled = {k: v for (k, v) in train_folders.items() if k in labeled_keys}
+    train_folders_unlabeled = {k: v for (k, v) in train_folders.items() if k not in labeled_keys}
+    mini_imagenet_database.train_folders = train_folders_labeled
+    # print(train_folders_labeled)
+
+    L = None
     ssml_maml = SSMLMAML(
         
         perc=labeled_percentage,
@@ -65,14 +96,14 @@ if __name__ == '__main__':
 
         database=mini_imagenet_database,
         network_cls=MiniImagenetModel,
-        n=5,
-        k_ml=1,
-        k_val_ml=1,
-        k_val=1,
-        k_val_val=1,
-        k_test=1,
-        k_val_test=1,
-        meta_batch_size=4,
+        n=N_WAY,
+        k_ml=K,
+        k_val_ml=K,
+        k_val=K,
+        k_val_val=K,
+        k_test=K,
+        k_val_test=K,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.05,
         num_steps_validation=5,
@@ -96,16 +127,19 @@ if __name__ == '__main__':
         gan=gan,
         latent_dim=latent_dim,
         generated_image_shape=shape,
+        
+        lasium_type = LASIUM_TYPE,
+
         database=mini_imagenet_database,
         network_cls=MiniImagenetModel,
-        n=5,
-        k_ml=1,
-        k_val=1,
-        k_val_ml=1,
-        k_val_val=1,
-        k_val_test=1,
-        k_test=1,
-        meta_batch_size=4,
+        n=N_WAY,
+        k_ml=K,
+        k_val=K,
+        k_val_ml=K,
+        k_val_val=K,
+        k_val_test=K,
+        k_test=K,
+        meta_batch_size=META_BATCH_SIZE,
         num_steps_ml=5,
         lr_inner_ml=0.05,
         num_steps_validation=5,
@@ -115,13 +149,11 @@ if __name__ == '__main__':
         log_train_images_after_iteration=200,
         num_tasks_val=100,
         clip_gradients=False,
-        experiment_name='mini_imagenet_p3',
+        experiment_name='mini_imagenet',
         val_seed=42,
         val_test_batch_norm_momentum=0.0
     )
 
-    ssml_maml_gan.visualize_meta_learning_task(shape, num_tasks_to_visualize=2, perc=labeled_percentage)
-
-    ssml_maml_gan.train(iterations=10000)
-    ssml_maml_gan.evaluate(10, 100, seed=42)
+    ssml_maml_gan.train(iterations=ITERATIONS)
+    ssml_maml_gan.evaluate(50, N_TASK_EVAL, seed=94305)
 

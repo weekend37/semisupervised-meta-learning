@@ -5,11 +5,12 @@ from utils import combine_first_two_axes
 
 
 class MAMLGAN(ModelAgnosticMetaLearningModel):
-    def __init__(self, gan, latent_dim, generated_image_shape, *args, **kwargs):
+    def __init__(self, gan, latent_dim, generated_image_shape, lasium_type, *args, **kwargs):
         super(MAMLGAN, self).__init__(*args, **kwargs)
         self.gan = gan
         self.latent_dim = latent_dim
         self.generated_image_shape = generated_image_shape
+        self.lasium_type = lasium_type
 
     def get_network_name(self):
         return self.model.name
@@ -99,7 +100,15 @@ class MAMLGAN(ModelAgnosticMetaLearningModel):
         return vectors
 
     def generate_all_vectors(self):
-        return self.generate_all_vectors_p1()
+        if self.lasium_type = "p1":
+            return self.generate_all_vectors_p1()
+        elif self.lasium_type = "p2":
+            return self.generate_all_vectors_p2()
+        elif self.lasium_type = "p3":
+            return self.generate_all_vectors_p3()
+        else:
+            print("Could not find LAISUM type.")
+            sys.exit()
 
     @tf.function
     def get_images_from_vectors(self, vectors):
