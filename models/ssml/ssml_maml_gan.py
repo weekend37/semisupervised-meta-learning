@@ -63,7 +63,7 @@ class SSMLMAMLGAN(MAMLGAN):
         maml_gan_train_dataset = self.get_train_dataset()
 
         print("Not Loading any SSMLMAMLGAN model")
-        iteration_count = -1 # self.load_model()
+        iteration_count =  -1 # self.load_model()
 
         N = 20
         N_labeled = int(np.ceil(self.perc * N))

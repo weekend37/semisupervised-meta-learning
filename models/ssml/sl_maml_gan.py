@@ -64,8 +64,8 @@ class SSMLMAMLGAN(MAMLGAN):
         print("Not Loading any SLMAMLGAN model")
         iteration_count = -1 # self.load_model()
 
-        N = 20 # 100
-        N_labeled = 20 # 100 # int(self.perc * N)
+        N = 20
+        N_labeled = 20 
         N_gen = int(N - N_labeled)
         
         print(" #### ### ## # N_labeled:", N_labeled)

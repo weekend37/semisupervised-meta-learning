@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         print("Usage:")
-        print("   $ python3 ssml_maml_gan_omniglot.py <labeled_percentage>")
+        print("   $ python3 sl_maml_gan_omniglot.py <labeled_percentage>")
         print("where <labeled_percentage> is a number in [0,1] (preferable having 0 or 5 in 2nd decimal place like 0, 0.05, 0.10, etc..)")
         sys.exit(9)
     elif len(sys.argv) == 2:
@@ -59,8 +59,6 @@ if __name__ == '__main__':
 
     experiment_name = prefix+str(labeled_percentage)
 
-    L = None
-
     gan = GAN(
         'omniglot',
         image_shape=shape,
@@ -73,21 +71,20 @@ if __name__ == '__main__':
         d_learning_rate=0.0003,
         g_learning_rate=0.0003,
     )
-    gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
+    # gan.perform_training(epochs=GAN_EPOCHS, checkpoint_freq=50)
     gan.load_latest_checkpoint()
 
     print("GAN training finished")
     time.sleep(1)
 
     train_folders = omniglot_database.train_folders
-    print("before:", len(list(train_folders.keys())))
     keys = list(train_folders.keys())
     sample_size = np.max([N_WAY*META_BATCH_SIZE, int(len(train_folders.keys())*labeled_percentage)])
     keys = np.random.choice(keys, sample_size, replace=False)
     train_folders = {k: v for (k, v) in train_folders.items() if k in keys}
-    print("after:", len(list(train_folders.keys())))
     omniglot_database.train_folders = train_folders
     
+    L = None
     ssml_maml = SSMLMAML(
 
         perc=labeled_percentage,

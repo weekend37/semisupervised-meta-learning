@@ -18,18 +18,18 @@ from models.maml.maml import ModelAgnosticMetaLearningModel
 from networks.maml_umtra_networks import SimpleModel, MiniImagenetModel, VGG19Model, FiveLayerResNet
 
 from models.lasiummamlgan.maml_gan_mini_imagenet import get_generator, get_discriminator
-from models.ssml.ssml_maml_gan import SSMLMAML, SSMLMAMLGAN
+from models.ssml.sl_maml_gan import SSMLMAML, SSMLMAMLGAN
 
 if __name__ == '__main__':
     
     if len(sys.argv) == 1:
         print("Usage:")
-        print("   $ python3 ssml_maml_gan_mini_imagenet.py <labeled_percentage>")
+        print("   $ python3 sl_maml_gan_mini_imagenet.py <labeled_percentage>")
         print("where <labeled_percentage> is a number in [0,1] (preferable having 0 or 5 in 2nd decimal place like 0, 0.05, 0.10, etc..)")
         sys.exit(9)
     elif len(sys.argv) == 2:
         labeled_percentage = float(sys.argv[1])
-        prefix = 'ssml_new_scheme_mini_imagenet_perc'
+        prefix = 'sl_new_scheme_mini_imagenet_perc'
     elif len(sys.argv) == 3:
         labeled_percentage = float(sys.argv[1])
         prefix = sys.argv[2]
