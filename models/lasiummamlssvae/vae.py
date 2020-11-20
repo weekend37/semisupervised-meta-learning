@@ -39,7 +39,7 @@ class VisualizationCallback(tf.keras.callbacks.TensorBoard):
         if epoch != 0 and epoch % self.visualization_freq == 0:
             vae = self.model
             for item in vae.get_train_dataset().take(1):
-                z_mean, z_log_var, z = vae.encode(item)
+                z_mean, z_log_var, z, preds = vae.encode(item)
                 new_item = vae.decode(z)
 
                 # writer = self._get_writer(self._train_run_name)
@@ -58,7 +58,7 @@ class AudioCallback(tf.keras.callbacks.TensorBoard):
         if epoch != 0 and epoch % self.visualization_freq == 0:
             vae = self.model
             for item in vae.get_train_dataset().take(1):
-                z_mean, z_log_var, z = vae.encode(item)
+                z_mean, z_log_var, z, preds = vae.encode(item)
                 new_item = vae.decode(z)
 
                 # writer = self._get_writer(self._train_run_name)
@@ -92,6 +92,7 @@ class VAE(keras.Model):
         **kwargs
     ):
         super(VAE, self).__init__(**kwargs)
+        print("Using ss vae.")
         self.latent_dim = latent_dim
         self.database = database
         self.parser = parser
@@ -106,6 +107,7 @@ class VAE(keras.Model):
         self.loss_metric = tf.keras.metrics.Mean()
         self.reconstruction_loss_metric = tf.keras.metrics.Mean()
         self.kl_loss_metric = tf.keras.metrics.Mean()
+        self.class_loss_metric = tf.keras.metrics.Mean()
 
     def get_vae_name(self):
         return self.vae_name
@@ -114,16 +116,18 @@ class VAE(keras.Model):
         return self.sampler((z_mean, z_log_var))
 
     def encode(self, item):
-        z_mean, z_log_var = self.encoder(item)
+        z_mean, z_log_var, preds = self.encoder(item)
         z = self.sample(z_mean, z_log_var)
-        return z_mean, z_log_var, z
+        return z_mean, z_log_var, z, preds
 
     def decode(self, item):
         return self.decoder(item)
 
     def call(self, inputs, training=None, mask=None):
-        z_mean, z_log_var = self.encoder(inputs)
+        inputs, labels = inputs
+        z_mean, z_log_var, preds = self.encoder(inputs)
         z = self.sampler([z_mean, z_log_var])
+        z = tf.concat([z,preds],axis=1)
         reconstruction = self.decoder(z)
         reconstruction_loss = tf.reduce_mean(
             keras.losses.binary_crossentropy(inputs, reconstruction)
@@ -132,12 +136,16 @@ class VAE(keras.Model):
         kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var)
         kl_loss = tf.reduce_mean(kl_loss)
         kl_loss *= -0.5
-        total_loss = reconstruction_loss + kl_loss
+
+        class_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels,preds))
+
+        total_loss = reconstruction_loss + kl_loss + class_loss
 
         return {
             "loss": total_loss,
             "reconstruction_loss": reconstruction_loss,
             "kl_loss": kl_loss,
+            "class_loss":class_loss,
         }
 
     def test_step(self, data):
@@ -145,11 +153,13 @@ class VAE(keras.Model):
         self.loss_metric.update_state(outputs['loss'])
         self.reconstruction_loss_metric.update_state(outputs['reconstruction_loss'])
         self.kl_loss_metric.update_state(outputs['kl_loss'])
+        self.class_loss_metric.update_state(outputs['class_loss'])
 
         return {
             "loss": self.loss_metric.result(),
             "reconstruction_loss": self.reconstruction_loss_metric.result(),
-            "kl_loss": self.kl_loss_metric.result()
+            "kl_loss": self.kl_loss_metric.result(),
+            "class_loss":self.class_loss_metric.result(),
         }
 
     def train_step(self, data):
@@ -162,20 +172,54 @@ class VAE(keras.Model):
         self.loss_metric.update_state(outputs['loss'])
         self.reconstruction_loss_metric.update_state(outputs['reconstruction_loss'])
         self.kl_loss_metric.update_state(outputs['kl_loss'])
+        self.class_loss_metric.update_state(outputs['class_loss'])
 
         return {
             "loss": self.loss_metric.result(),
             "reconstruction_loss": self.reconstruction_loss_metric.result(),
-            "kl_loss": self.kl_loss_metric.result()
+            "kl_loss": self.kl_loss_metric.result(),
+            "class_loss":self.class_loss_metric.result(),
         }
 
+    # def get_dataset(self, partition='train'):
+    #     instances = self.database.get_all_instances(partition_name=partition)
+    #     random.shuffle(instances)
+    #     train_dataset = tf.data.Dataset.from_tensor_slices(instances).shuffle(len(instances))
+    #     train_dataset = train_dataset.map(self.parser.get_parse_fn())
+    #     train_dataset = train_dataset.batch(128)
+    #     return train_dataset
+
     def get_dataset(self, partition='train'):
-        instances = self.database.get_all_instances(partition_name=partition)
-        random.shuffle(instances)
-        train_dataset = tf.data.Dataset.from_tensor_slices(instances).shuffle(len(instances))
-        train_dataset = train_dataset.map(self.parser.get_parse_fn())
-        train_dataset = train_dataset.batch(128)
-        return train_dataset
+        instances, instance_to_class, class_ids = self.database.get_all_instances(partition_name=partition, with_classes=True)
+
+        # get dataset from the above files
+        dataset = tf.data.Dataset.from_tensor_slices(instances)
+        dataset = dataset.map(self.get_db_process_path(self.database, instance_to_class, class_ids))
+        dataset = dataset.cache()
+        # shuffle just once in the beginning now.
+        dataset = dataset.shuffle(buffer_size=len(instances),reshuffle_each_iteration=False)
+        # chunk it. drop_remainder will be useful when testing different % of sup,unsup
+        dataset = dataset.batch(32,drop_remainder=True)
+
+        return dataset
+
+    def get_db_process_path(self, db, instance_to_class, class_ids):
+        num_classes = len(db.train_folders)
+
+        def process_path(file_path):
+            def extract_label_from_file_path(fp):
+                fp = str(fp.numpy(), 'utf-8')
+                label = instance_to_class[fp]
+                label = class_ids[label]
+                label = tf.one_hot(label, depth=num_classes)
+                # I printed shape here and it said 1200 by default.
+                return label
+
+            label = tf.py_function(extract_label_from_file_path, inp=[file_path], Tout=tf.float32)
+            image = self.parser.get_parse_fn()(file_path)
+            return image, label
+        
+        return process_path
 
     def get_train_dataset(self):
         return self.get_dataset(partition='train')
@@ -183,12 +227,13 @@ class VAE(keras.Model):
     def get_val_dataset(self):
         return self.get_dataset(partition='val')
 
+
     def load_latest_checkpoint(self, epoch_to_load_from=None):
         latest_checkpoint = tf.train.latest_checkpoint(
             os.path.join(
                 settings.PROJECT_ROOT_ADDRESS,
                 'models',
-                'lasiummamlvae',
+                'lasiummamlssvae',
                 'vae',
                 self.get_vae_name(),
                 'vae_checkpoints'
@@ -215,7 +260,7 @@ class VAE(keras.Model):
             filepath=os.path.join(
                 settings.PROJECT_ROOT_ADDRESS,
                 'models',
-                'lasiummamlvae',
+                'lasiummamlssvae',
                 'vae',
                 self.get_vae_name(),
                 'vae_checkpoints',
@@ -232,7 +277,7 @@ class VAE(keras.Model):
             log_dir=os.path.join(
                 settings.PROJECT_ROOT_ADDRESS,
                 'models',
-                'lasiummamlvae',
+                'lasiummamlssvae',
                 'vae',
                 self.get_vae_name(),
                 'vae_logs'
@@ -240,7 +285,8 @@ class VAE(keras.Model):
             visualization_freq=self.visualization_freq
         )
 
-        callbacks = [tensorboard_callback, checkpoint_callback]
+        #callbacks = [tensorboard_callback, checkpoint_callback]
+        callbacks = [checkpoint_callback]
 
         self.compile(optimizer=self.optimizer)
         self.fit(
@@ -254,7 +300,7 @@ class VAE(keras.Model):
     def visualize_meta_learning_task2(self):
         tf.random.set_seed(10)
         for item in self.get_train_dataset().take(1):
-            z_mean, z_log_var, z = self.encode(item)
+            z_mean, z_log_var, z, preds = self.encode(item)
             fig, axes = plt.subplots(1, 6)
             fig.set_figwidth(6)
             fig.set_figheight(1)
@@ -269,7 +315,7 @@ class VAE(keras.Model):
     def visualize_meta_learning_task(self):
         tf.random.set_seed(10)
         for item in self.get_train_dataset().take(1):
-            z_mean, z_log_var, z = self.encode(item)
+            z_mean, z_log_var, z, preds = self.encode(item)
             new_item = self.decode(z)
 
             std = tf.exp(0.5 * z_log_var)

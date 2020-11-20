@@ -117,13 +117,14 @@ class MAML_VAE(ModelAgnosticMetaLearningModel):
             # @tf.function
             def f(instances):
                 # current_time = datetime.now()
-                z_mean, z_log_var, z = self.vae.encode(instances)
+                z_mean, z_log_var, z, preds = self.vae.encode(instances)
                 # print(f'encode time spent: {datetime.now() - current_time}')
 
                 # current_time = datetime.now()
                 new_zs = list()
                 for i in range(self.k_ml + self.k_val_ml - 1):
                     new_z = self.generate_new_z_from_z_data(z, z_mean, z_log_var, rotation_index=i)
+                    new_z = tf.concat([new_z,preds],axis=1)
                     new_zs.append(new_z)
                 new_zs = tf.concat(new_zs, axis=0)
                 # print(f'generate z time spent: {datetime.now() - current_time}')
