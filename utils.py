@@ -300,3 +300,9 @@ if __name__ == '__main__':
     #
     # print(np.linalg.norm(At))
 
+
+def name_repr(name):
+    def wrapper(func):
+        func.name = name
+        return func
+    return wrapper

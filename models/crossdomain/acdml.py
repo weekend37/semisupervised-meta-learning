@@ -10,7 +10,7 @@ from models.crossdomain.attention import MiniImagenetModel, AttentionModel, deco
 
 from tqdm import tqdm
 from typing import List
-from decorators import name_repr
+from utils import name_repr
 from utils import combine_first_two_axes
 
 

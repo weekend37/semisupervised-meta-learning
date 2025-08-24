@@ -21,7 +21,7 @@ from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.layers import add
 from tensorflow.keras import backend as K
 
-from decorators import name_repr
+from utils import name_repr
 
 
 def scaling(x, scale):

@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from decorators import name_repr
+from utils import name_repr
 from models.maml.maml import ModelAgnosticMetaLearningModel
 from databases import CelebADatabase
 
